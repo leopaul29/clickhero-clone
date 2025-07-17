@@ -1,0 +1,20 @@
+.app {
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    margin: auto;
+    flex-direction: column;
+    gap: 100px;
+}
+
+.split-screen{
+    display:flex;
+    flex-direction: row;
+    gap: 100px;
+}
+
+.monster-visual {
+    height: 200px;
+    width: 200px;
+    background-color: lightgray;
+}
