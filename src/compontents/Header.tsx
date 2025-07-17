@@ -1,16 +1,14 @@
-import { useContext } from 'react';
-import { GameContext } from '../context/GameContext.tsx';
-
+import {useGameContext} from "../hooks/UseGameContext.tsx";
 /**
  * Header component displaying player stats
  * @constructor
  */
 export function Header() {
-    const gameContext = useContext(GameContext);
+    const {gold, power, dps} = useGameContext();
 
     return <div className="player-stats">
-        <p>Current gold: {gameContext.gold}</p>
-        <p>Click power: {gameContext.power}</p>
-        <p>DPS: {gameContext.dps}</p>
+        <p>Current gold: {gold}</p>
+        <p>Click power: {power}</p>
+        <p>DPS: {dps}</p>
     </div>
 }

@@ -1,23 +1,25 @@
-import {type BonusProps} from '../context/GameContext.tsx';
+import type {Bonus} from "../types/game.ts";
 import {useGameContext} from "../hooks/UseGameContext.tsx";
 
 /**
+ * Display Bonus line
  * @constructor
  */
-export function Bonus({ bonus }: { bonus: BonusProps }) {
+export function Bonus({ bonus }: { bonus: Bonus }) {
     const {buyBonus, gold} = useGameContext();
 
-    return <div>
-        <h2>name: {bonus.name}</h2>
-        <p>description: {bonus.description}</p>
-        <p>power: {bonus.power}</p>
-        <p>level: {bonus.level}</p>
-        <p>cost: {bonus.cost}</p>
-        <button 
-            onClick={() => buyBonus(bonus)}
-            disabled={gold < bonus.cost}
-        >
-            BUY
-        </button>
-    </div>
+    return <>
+        <td>name: {bonus.name}</td>
+        <td>power: {bonus.power}</td>
+        <td>level: {bonus.level}</td>
+        <td>cost: {bonus.cost}</td>
+        <td>
+            <button
+                onClick={() => buyBonus(bonus)}
+                disabled={gold < bonus.cost}
+            >
+                BUY
+            </button>
+        </td>
+    </>
 }

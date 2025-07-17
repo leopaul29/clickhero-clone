@@ -12,8 +12,6 @@ function App() {
             <div>
                 <h1>Player</h1>
                 <Header/>
-                <AttackButton/>
-                <DpsTimer/>
             </div>
             <div className="split-screen">
                 <div>
@@ -23,6 +21,8 @@ function App() {
                 <div>
                     <h1>Monster</h1>
                     <Monster/>
+                    <AttackButton/>
+                    <DpsTimer/>
                 </div>
             </div>
         </div>

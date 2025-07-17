@@ -18,3 +18,8 @@
     width: 200px;
     background-color: lightgray;
 }
+
+.player-stats{
+    display: flex;
+    gap: 100px;
+}
