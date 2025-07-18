@@ -8,7 +8,7 @@ import {DpsTimer} from "./compontents/DpsTimer.tsx";
 function App() {
 
     return (
-        <div className="app">
+        <div className="app japanese-paper">
             <div>
                 <h1>Player</h1>
                 <Header/>

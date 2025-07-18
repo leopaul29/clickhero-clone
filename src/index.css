@@ -1,0 +1,6 @@
+/* ✅ Styles très spécifiques */
+.japanese-paper {
+    background: linear-gradient(45deg, #faf0e6 25%, transparent 25%),
+    linear-gradient(-45deg, #faf0e6 25%, transparent 25%);
+    background-size: 4px 4px;
+}
