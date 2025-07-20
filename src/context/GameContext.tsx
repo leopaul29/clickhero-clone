@@ -15,8 +15,9 @@ export const GameContextProvider = ({children}: GameContextProviderProps) => {
     const [dps, setDps] = useState(0);
     const [currentMonster, setCurrentMonster] = useState(MONSTERS[0]);
     const [isAttacking, setIsAttacking] = useState(false);
+    const [combatLog, setCombatLog] = useState<string[]>([]);
 
-    const damageMonster = (damage:number) => {
+    const damageMonster = (damage:number, source:string = "Attaque") => {
         const newLife = Math.max(0, currentMonster.life - damage);
 
         if(newLife <= 0) {
@@ -29,9 +30,16 @@ export const GameContextProvider = ({children}: GameContextProviderProps) => {
             } else {
                 setCurrentMonster(getNextMonster());
             }
+            setCombatLog(prev => {
+                return [...prev.slice(-4), `${currentMonster.nameJp} defeated ! +${reward} 金`];
+            });
+            setCurrentMonster(getNextMonster(currentMonster.id));
         } else {
             setCurrentMonster(prev => ({ ...prev, life: newLife }));
             setCurrentMonster(prevCurrentMonster => ({...prevCurrentMonster, life: newLife}))
+            setCombatLog(prev => {
+                return [...prev.slice(-4), `${source}: -${damage} HP`];
+            });
         }
     }
 
@@ -40,10 +48,10 @@ export const GameContextProvider = ({children}: GameContextProviderProps) => {
 
         setIsAttacking(true);
 
-        damageMonster(power);
+        damageMonster(power,"刀攻撃");
         setTimeout(() => setIsAttacking(false), 300);
     }
-    const applyDps=()=> damageMonster(dps);
+    const applyDps=()=> damageMonster(dps, "Chi Energy");
     const buyBonus= (bonus: Bonus) => {
         if (gold >= bonus.cost) {
             setGold(prev => prev - bonus.cost);
@@ -55,11 +63,12 @@ export const GameContextProvider = ({children}: GameContextProviderProps) => {
                     setDps(prev => prev + bonus.power);
                     break;
             }
+            setCombatLog((prev:string[]) => [...prev.slice(-4), `${bonus.nameJp} improved !`]);
         }
     };
 
     return (
-        <GameContext.Provider value={{gold, power, dps, currentMonster, isAttacking, attackMonster, applyDps, buyBonus}}>
+        <GameContext.Provider value={{gold, power, dps, currentMonster, isAttacking, attackMonster, applyDps, buyBonus, combatLog}}>
             {children}
         </GameContext.Provider>
     );

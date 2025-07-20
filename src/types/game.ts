@@ -29,4 +29,5 @@ export interface GameContextType {
     attackMonster: () => void;
     applyDps: () => void;
     buyBonus: (bonus: Bonus) => void;
+    combatLog: string[];
 }
