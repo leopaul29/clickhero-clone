@@ -6,15 +6,15 @@ import {BattleZone} from "./compontents/BattleZone.tsx";
 function App() {
 
     return (
-        <div>
+        <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-100 relative overflow-hidden">
             <div>
                 <Header/>
             </div>
-            <div className="split-screen">
+            <div className="flex flex-row gap-5 m-5">
                 <div>
                     <Shop/>
                 </div>
-                <div>
+                <div className="grow">
                     <BattleZone/>
                 </div>
             </div>

@@ -7,25 +7,7 @@ export function Monster() {
     const {currentMonster, isAttacking} = useGameContext();
     const lifePercentage = (currentMonster.life / currentMonster.maxLife) * 100;
 
-    // Apply DPS damage every second
-    // useEffect(() => {
-    //     const dpsInterval = setInterval(() => {
-    //         if (gameContext.dps > 0) {
-    //             setMonster(prevState => {
-    //                 if (prevState.life - gameContext.dps <= 0) {
-    //                     gameContext.setGold(prevGold => prevGold + prevState.gold);
-    //                     return MOB1;
-    //                 } else {
-    //                     return {...prevState, life: prevState.life - gameContext.dps};
-    //                 }
-    //             });
-    //         }
-    //     }, 1000);
-    //
-    //     return () => clearInterval(dpsInterval);
-    // }, [gameContext.dps]);
-
-    return <div className="text-center space-y-4">
+    return <div>
         <div className="space-y-2">
             <h2 className="text-3xl font-bold text-gray-800">{currentMonster.nameJp}</h2>
             <h3 className="text-xl text-gray-600">{currentMonster.name}</h3>
