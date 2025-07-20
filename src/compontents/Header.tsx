@@ -8,7 +8,7 @@ export function Header() {
     const {gold, power, dps} = useGameContext();
 
     return <div className="bg-gradient-to-r from-red-900 to-red-800 text-white p-4 shadow-lg">
-            <div className="container mx-auto flex justify-between items-center">
+            <div className="container mx-auto flex justify-center items-center">
                 <div className="flex items-center space-x-6">
                     <div className="flex items-center space-x-2">
                         <Coins className="w-6 h-6 text-yellow-300" />
@@ -26,13 +26,6 @@ export function Header() {
                         <span className="text-sm">DPS</span>
                     </div>
                 </div>
-                {/*<button*/}
-                {/*    onClick={() => setShowShop(!showShop)}*/}
-                {/*    className="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"*/}
-                {/*>*/}
-                {/*    <ShoppingCart className="w-5 h-5" />*/}
-                {/*    <span>商店</span>*/}
-                {/*</button>*/}
             </div>
         </div>
 }
