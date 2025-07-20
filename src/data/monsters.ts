@@ -1,12 +1,16 @@
 import type {Monster, Bonus} from '../types/game';
 
 export const MONSTERS: Monster[] = [
-    { id: 1, name: 'Rototo', life: 10, gold: 1 },
-    { id: 2, name: 'Putipito', life: 25, gold: 3 },
-    { id: 3, name: 'Bigboss', life: 50, gold: 8 },
+    { id: 1, name: "Kappa", nameJp: "河童", life: 15, maxLife: 15, goldReward: 3, emoji: "🐸", description: "River spirit" },
+    { id: 2, name: "Tengu", nameJp: "天狗", life: 35, maxLife: 35, goldReward: 8, emoji: "👺", description: "Mountain's demon" },
+    { id: 3, name: "Oni", nameJp: "鬼", life: 60, maxLife: 60, goldReward: 15, emoji: "👹", description: "Fearsome Ogre" },
+    { id: 4, name: "Kitsune", nameJp: "九尾狐", life: 100, maxLife: 100, goldReward: 25, emoji: "🦊", description: "Nine-tailed fox" },
 ];
+// create one monster who is a chest with a lot of life and a lot of gold that randomly appears every 1% of time
 
 export const BONUSES: Bonus[] = [
-    { name: "clickPower", description: "Add click power", power: 5, level: 0, cost: 10 },
-    { name: "dpsPower", description: "Add DPS power", power: 3, level: 0, cost: 50 }
+    { name: "Katana Power", nameJp: "刀の力", description: "Increases attack power", power: 5, level: 0, cost: 15, icon: "⚔️" },
+    { name: "Chi Energy", nameJp: "気のエネルギー", description: "Automatic damage per second", power: 3, level: 0, cost: 40, icon: "🌊" },
+    { name: "Lucky Charm", nameJp: "幸運のお守り", description: "Increases rewards", power: 2, level: 0, cost: 100, icon: "🎋" },
 ];
+// create a bonus that clicks 5 times per second automaticaly during 30 sec

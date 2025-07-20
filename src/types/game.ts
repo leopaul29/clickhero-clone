@@ -1,13 +1,19 @@
 export interface Monster {
     id:number,
     name: string,
+    nameJp: string,
     life: number,
-    gold: number,
+    maxLife: number,
+    goldReward: number,
+    emoji:string,
+    description: string,
 }
 
 export interface Bonus {
     name: string;
+    nameJp: string,
     description: string;
+    icon: string,
     power: number;
     level: number;
     cost: number;
