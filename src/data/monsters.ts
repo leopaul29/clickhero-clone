@@ -9,8 +9,8 @@ export const MONSTERS: Monster[] = [
 // create one monster who is a chest with a lot of life and a lot of gold that randomly appears every 1% of time
 
 export const BONUSES: Bonus[] = [
-    { name: "Katana Power", nameJp: "刀の力", description: "Increases attack power", power: 5, level: 0, cost: 15, icon: "⚔️" },
-    { name: "Chi Energy", nameJp: "気のエネルギー", description: "Automatic damage per second", power: 3, level: 0, cost: 40, icon: "🌊" },
-    { name: "Lucky Charm", nameJp: "幸運のお守り", description: "Increases rewards", power: 2, level: 0, cost: 100, icon: "🎋" },
+    { id:1, name: "Katana Power", nameJp: "刀の力", description: "Increases attack power", power: 5, level: 0, cost: 15, icon: "⚔️" },
+    { id:2, name: "Chi Energy", nameJp: "気のエネルギー", description: "Automatic damage per second", power: 3, level: 0, cost: 40, icon: "🌊" },
+    { id:3, name: "Lucky Charm", nameJp: "幸運のお守り", description: "Increases rewards", power: 2, level: 0, cost: 100, icon: "🎋" },
 ];
 // create a bonus that clicks 5 times per second automaticaly during 30 sec

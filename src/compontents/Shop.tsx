@@ -12,7 +12,7 @@ export function Shop() {
         <div className="space-y-4">
             {BONUSES.map(bonus => (
                 <div key={bonus.name} className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 border border-yellow-200">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-5">
                         <div className="flex items-center space-x-3">
                             <span className="text-2xl">{bonus.icon}</span>
                             <div>

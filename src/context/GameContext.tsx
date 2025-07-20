@@ -10,7 +10,7 @@ interface GameContextProviderProps {
 }
 
 export const GameContextProvider = ({children}: GameContextProviderProps) => {
-    const [gold, setGold] = useState(10);
+    const [gold, setGold] = useState(20);
     const [power, setPower] = useState(1);
     const [dps, setDps] = useState(0);
     const [currentMonster, setCurrentMonster] = useState(MONSTERS[0]);
@@ -47,12 +47,11 @@ export const GameContextProvider = ({children}: GameContextProviderProps) => {
     const buyBonus= (bonus: Bonus) => {
         if (gold >= bonus.cost) {
             setGold(prev => prev - bonus.cost);
-
-            switch (bonus.name) {
-                case "clickPower":
+            switch (bonus.id) {
+                case 1:
                     setPower(prev => prev + bonus.power);
                     break;
-                case "dpsPower":
+                case 2:
                     setDps(prev => prev + bonus.power);
                     break;
             }

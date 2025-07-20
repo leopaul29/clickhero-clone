@@ -10,6 +10,7 @@ export interface Monster {
 }
 
 export interface Bonus {
+    id:number,
     name: string;
     nameJp: string,
     description: string;
