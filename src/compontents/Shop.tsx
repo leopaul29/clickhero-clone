@@ -1,8 +1,7 @@
-import {BONUSES} from "../data/monsters.ts";
 import {useGameContext} from "../hooks/UseGameContext.tsx";
 
 export function Shop() {
-    const {buyBonus, gold} = useGameContext();
+    const {bonuses, buyBonus, gold} = useGameContext();
 
     return <div className="bg-white rounded-lg shadow-xl p-6 japanese-paper min-w-[500px]">
         <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
@@ -10,7 +9,7 @@ export function Shop() {
         </h2>
 
         <div className="space-y-4">
-            {BONUSES.map(bonus => (
+            {bonuses.map(bonus => (
                 <div key={bonus.name} className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 border border-yellow-200">
                     <div className="flex items-center justify-between gap-5">
                         <div className="flex items-center space-x-3">
@@ -18,7 +17,7 @@ export function Shop() {
                             <div>
                                 <h3 className="font-bold text-gray-800">{bonus.nameJp}</h3>
                                 <p className="text-sm text-gray-600">{bonus.name}</p>
-                                <p className="text-xs text-gray-500">{bonus.description}</p>
+                                <p className="text-xs text-gray-500">{bonus.description} {bonus.power}</p>
                                 <p className="text-xs text-blue-600">Level {bonus.level}</p>
                             </div>
                         </div>
