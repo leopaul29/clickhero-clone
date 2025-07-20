@@ -4,7 +4,7 @@ import {DpsTimer} from "./DpsTimer.tsx";
 import {CombatLog} from "./CombatLog.tsx";
 
 export function BattleZone() {
-    return <div className="bg-white rounded-lg shadow-xl p-6 japanese-paper">
+    return <div className="bg-white rounded-lg shadow-xl p-6 japanese-paper min-w-[500px]">
         <div className="text-center space-y-4">
             <Monster/>
             <AttackButton/>

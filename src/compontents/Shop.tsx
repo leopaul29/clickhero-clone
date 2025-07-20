@@ -4,7 +4,7 @@ import {useGameContext} from "../hooks/UseGameContext.tsx";
 export function Shop() {
     const {buyBonus, gold} = useGameContext();
 
-    return <div className="bg-white rounded-lg shadow-xl p-6 japanese-paper">
+    return <div className="bg-white rounded-lg shadow-xl p-6 japanese-paper min-w-[500px]">
         <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
             🏪 道具屋 (Shop)
         </h2>

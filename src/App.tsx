@@ -10,13 +10,9 @@ function App() {
             <div>
                 <Header/>
             </div>
-            <div className="flex flex-row gap-5 m-5">
-                <div>
-                    <Shop/>
-                </div>
-                <div className="grow">
-                    <BattleZone/>
-                </div>
+            <div className="flex flex-row gap-5 m-5 justify-center">
+                <Shop/>
+                <BattleZone/>
             </div>
         </div>
     )
