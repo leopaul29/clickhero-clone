@@ -24,7 +24,7 @@ Feel free to fork, star ⭐, or contribute!
 
 - 🧠 [React](https://reactjs.org/)
 - ⚡ [Vite](https://vitejs.dev/)
-- 💅 Tailwind (selon ton choix)
+- 💅 Tailwind
 - 📦 State management (useState/context)
 
 [//]: # (- 🎨 Custom assets &#40;Japanese-themed icons, fonts...&#41;)
@@ -82,10 +82,9 @@ Want to add features, fix bugs, or localize the game? Awesome!
 4. Push to the branch (`git push origin feature/cool-feature`)
 5. Open a Pull Request ✅
 
-[//]: # (## 📄 License)
+## 📄 License
 
-[//]: # ()
-[//]: # ([![License: MIT]&#40;https://img.shields.io/badge/License-MIT-yellow.svg&#41;]&#40;https://opensource.org/licenses/MIT&#41;)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
