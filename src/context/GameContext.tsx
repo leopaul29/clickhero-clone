@@ -48,10 +48,13 @@ export const GameContextProvider = ({children}: GameContextProviderProps) => {
         if (gold >= bonus.cost) {
             setGold(prev => prev - bonus.cost);
 
-            if (bonus.name === "clickPower") {
-                setPower(prev => prev + bonus.power);
-            } else if (bonus.name === "dpsPower") {
-                setDps(prev => prev + bonus.power);
+            switch (bonus.name) {
+                case "clickPower":
+                    setPower(prev => prev + bonus.power);
+                    break;
+                case "dpsPower":
+                    setDps(prev => prev + bonus.power);
+                    break;
             }
         }
     };
