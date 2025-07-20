@@ -3,8 +3,7 @@ import {AttackButton} from "./AttackButton.tsx";
 import {DpsTimer} from "./DpsTimer.tsx";
 
 export function BattleZone() {
-    return <div className="space-y-6">
-        <h1>Monster</h1>
+    return <div className="bg-white rounded-lg shadow-xl p-6 japanese-paper">
         <Monster/>
         <AttackButton/>
         <DpsTimer/>

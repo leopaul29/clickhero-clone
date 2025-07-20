@@ -1,25 +1,20 @@
-.app {
-    display:flex;
-    justify-content: center;
-    align-items: center;
-    margin: auto;
-    flex-direction: column;
-    gap: 100px;
-}
-
 .split-screen{
     display:flex;
     flex-direction: row;
     gap: 100px;
 }
 
-.monster-visual {
-    height: 200px;
-    width: 200px;
-    background-color: lightgray;
+.japanese-paper {
+    background-image:
+            radial-gradient(circle at 1px 1px, rgba(139, 69, 19, 0.1) 1px, transparent 0);
+    background-size: 20px 20px;
 }
 
-.player-stats{
-    display: flex;
-    gap: 100px;
+@keyframes attack-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+.attack-animation {
+    animation: attack-pulse 0.3s ease-in-out;
 }

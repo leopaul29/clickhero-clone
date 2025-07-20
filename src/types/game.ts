@@ -23,7 +23,8 @@ export interface GameContextType {
     gold: number;
     power: number;
     dps: number;
-    monster: Monster;
+    currentMonster: Monster;
+    isAttacking: boolean;
     attackMonster: () => void;
     applyDps: () => void;
     buyBonus: (bonus: Bonus) => void;
