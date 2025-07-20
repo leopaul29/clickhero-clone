@@ -28,6 +28,6 @@ export function Monster() {
         <h2>name: {monster.name}</h2>
         <div className="monster-visual"></div>
         <p>life: {monster.life}</p>
-        <p>gold: {monster.gold}</p>
+        <p>gold: {monster.goldReward}</p>
     </div>
 }
