@@ -1,10 +1,16 @@
-import {createContext, useState, type ReactNode, useEffect, useCallback} from "react";
+import {useState, type ReactNode, useEffect, useCallback, createContext} from "react";
 import {BONUSES, MONSTERS} from "../data/monsters.ts";
 import type {Bonus, GameContextType} from "../types/game.ts";
 import {calculateReward, getNextMonster, updateBonusesStats} from "../utils/gameLogic.ts";
-import {createDebouncedUpdater, load, storeBonuses, storeDps, storeGold, storePower} from "../utils/storage.ts";
-
-export const GameContext = createContext<GameContextType | undefined>(undefined);
+import {
+    clearLocalStorage,
+    createDebouncedUpdater,
+    load,
+    storeBonuses,
+    storeDps,
+    storeGold,
+    storePower
+} from "../utils/storage.ts";
 
 interface GameContextProviderProps {
     children: ReactNode;
@@ -19,6 +25,8 @@ const initializeGameState = () => {
         bonuses: savedData.bonuses.length > 0 ? savedData.bonuses : BONUSES
     };
 };
+
+export const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export const GameContextProvider = ({children}: GameContextProviderProps) => {
     const initialState  = initializeGameState();
@@ -100,8 +108,17 @@ export const GameContextProvider = ({children}: GameContextProviderProps) => {
         debouncedUpdate({ gold, power, dps, bonuses });
     }, [gold, power, dps, bonuses]);
 
+
+    const clearProgress = () => {
+        setGold(0)
+        setPower(10)
+        setDps(0)
+        setBonuses(BONUSES)
+        clearLocalStorage()
+    }
+
     return (
-        <GameContext.Provider value={{gold, power, dps, currentMonster, isAttacking, attackMonster, applyDps, bonuses, buyBonus, combatLog}}>
+        <GameContext.Provider value={{gold, power, dps, currentMonster, isAttacking, attackMonster, applyDps, bonuses, buyBonus, combatLog,clearProgress}}>
             {children}
         </GameContext.Provider>
     );

@@ -31,4 +31,5 @@ export interface GameContextType {
     bonuses: Bonus[];
     buyBonus: (bonus: Bonus) => void;
     combatLog: string[];
+    clearProgress: () => void;
 }
