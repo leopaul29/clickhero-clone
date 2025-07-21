@@ -1,7 +1,8 @@
-import {createContext, useState, type ReactNode} from "react";
+import {createContext, useState, type ReactNode, useEffect, useCallback} from "react";
 import {BONUSES, MONSTERS} from "../data/monsters.ts";
 import type {Bonus, GameContextType} from "../types/game.ts";
 import {calculateReward, getNextMonster, updateBonusesStats} from "../utils/gameLogic.ts";
+import {createDebouncedUpdater, load, storeBonuses, storeDps, storeGold, storePower} from "../utils/storage.ts";
 
 export const GameContext = createContext<GameContextType | undefined>(undefined);
 
@@ -9,22 +10,35 @@ interface GameContextProviderProps {
     children: ReactNode;
 }
 
+const initializeGameState = () => {
+    const savedData = load();
+    return {
+        gold: savedData.gold,
+        power: savedData.power,
+        dps: savedData.dps,
+        bonuses: savedData.bonuses.length > 0 ? savedData.bonuses : BONUSES
+    };
+};
+
 export const GameContextProvider = ({children}: GameContextProviderProps) => {
-    const [gold, setGold] = useState(0);
-    const [power, setPower] = useState(1);
-    const [dps, setDps] = useState(0);
+    const initialState  = initializeGameState();
+    const [gold, setGold] = useState<number>(initialState.gold);
+    const [power, setPower] = useState<number>(initialState.power);
+    const [dps, setDps] = useState<number>(initialState.dps);
+    const [bonuses, setBonuses] = useState<Bonus[]>(initialState.bonuses);
+
     const [currentMonster, setCurrentMonster] = useState(MONSTERS[0]);
     const [isAttacking, setIsAttacking] = useState(false);
     const [combatLog, setCombatLog] = useState<string[]>([]);
-    const [bonuses, setBonuses] = useState<Bonus[]>(BONUSES);
 
-    const damageMonster = (damage:number, source:string = "Attaque") => {
+    const damageMonster = useCallback((damage:number, source:string = "Attaque") => {
         const newLife = Math.max(0, currentMonster.life - damage);
 
         if(newLife <= 0) {
             const reward: number = calculateReward(currentMonster.goldReward,bonuses[2].level,bonuses[2].power);
-
-            setGold(prev => prev + reward);
+            const newGoldAmount = gold + reward;
+            setGold(newGoldAmount);
+            storeGold(newGoldAmount);
             setCurrentMonster(getNextMonster());
             setCombatLog(prev => {
                 return [...prev.slice(-4), `${currentMonster.nameJp} defeated ! +${reward} 金`];
@@ -37,7 +51,7 @@ export const GameContextProvider = ({children}: GameContextProviderProps) => {
                 return [...prev.slice(-4), `${source}: -${damage} HP`];
             });
         }
-    }
+    },[setGold,setCurrentMonster,combatLog])
 
     const attackMonster=() => {
         if (isAttacking) return;
@@ -48,28 +62,43 @@ export const GameContextProvider = ({children}: GameContextProviderProps) => {
         setTimeout(() => setIsAttacking(false), 300);
     }
     const applyDps=()=> damageMonster(dps, "Chi Energy");
-    const buyBonus= (bonus: Bonus) => {
+    const buyBonus= useCallback((bonus: Bonus) => {
         if (gold >= bonus.cost) {
-            setGold(prev => prev - bonus.cost);
+            const newGoldAmount = gold - bonus.cost;
+            setGold(newGoldAmount);
+            storeGold(newGoldAmount);
             switch (bonus.id) {
                 case 1:
-                    setPower(prev => prev + bonus.power);
-                    break;
+                { const newPowerAmount= power + bonus.power;
+                    setPower(newPowerAmount);
+                    storePower(newPowerAmount)
+                    break; }
                 case 2:
-                    setDps(prev => prev + bonus.power);
-                    break;
+                { const newDpsAmount = dps + bonus.power;
+                    setDps(newDpsAmount);
+                    storeDps(newDpsAmount);
+                    break; }
             }
 
             const {newBonusCost, newBonusPower} = updateBonusesStats(bonus);
-            setBonuses(prev => prev.map(b =>
-                b.name === bonus.name
-                    ? { ...b, level: b.level + 1, cost: newBonusCost, power: newBonusPower ,  }
-                    : b
-            ));
+            setBonuses(prev => {
+                const newBonuses = prev.map(b =>
+                    b.name === bonus.name
+                        ? {...b, level: b.level + 1, cost: newBonusCost, power: newBonusPower}
+                        : b)
+                storeBonuses(newBonuses);
+                return newBonuses
+                }
+            );
 
             setCombatLog((prev:string[]) => [...prev.slice(-4), `${bonus.nameJp} improved by ${bonus.power}!`]);
         }
-    };
+    },[])
+
+    const debouncedUpdate = createDebouncedUpdater(300);
+    useEffect(() => {
+        debouncedUpdate({ gold, power, dps, bonuses });
+    }, [gold, power, dps, bonuses]);
 
     return (
         <GameContext.Provider value={{gold, power, dps, currentMonster, isAttacking, attackMonster, applyDps, bonuses, buyBonus, combatLog}}>

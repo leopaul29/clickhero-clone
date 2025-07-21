@@ -23,12 +23,10 @@ export const updateBonusesStats = (bonus:Bonus) => {
 
     if(COST_TO_INCREASE_BONUSES_ID.includes(bonus.id)){
         newBonusCost = Math.floor(bonus.cost * 1.5)
-        console.log (newBonusCost);
     }
 
     if(POWER_TO_INCREASE_BONUSES_ID.includes(bonus.id)) {
         newBonusPower = Math.floor(bonus.power * 1.5)
-        console.log (newBonusCost);
     }
 
     return {newBonusCost, newBonusPower}

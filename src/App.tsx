@@ -4,7 +4,6 @@ import {Shop} from "./compontents/Shop.tsx";
 import {BattleZone} from "./compontents/BattleZone.tsx";
 
 function App() {
-
     return (
         <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-100 relative overflow-hidden">
             <div>
