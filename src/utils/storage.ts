@@ -100,3 +100,19 @@ export function createDebouncedUpdater(delay = 500) {
         }, delay);
     };
 }
+/*export const usePersistence = () => {
+    const context = useContext(GameContext);
+
+    const saveGame = useCallback(() => {
+        localStorage.setItem('clickhero-save', JSON.stringify(context.persistentData));
+    }, [context.persistentData]);
+
+    const loadGame = useCallback(() => {
+        const saved = localStorage.getItem('clickhero-save');
+        if (saved) {
+            setPersistentData(JSON.parse(saved));
+        }
+    }, []);
+
+    return { saveGame, loadGame, clearProgress: context.clearProgress };
+};*/

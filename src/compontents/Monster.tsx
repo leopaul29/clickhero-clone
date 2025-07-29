@@ -1,11 +1,12 @@
-import {useGameContext} from "../hooks/UseGameContext.tsx";
+import {useMonster} from "../hooks/useMonster.ts";
 
 /**
+ * Monster display and life bar
  * @constructor
  */
 export function Monster() {
-    const {currentMonster, isAttacking} = useGameContext();
-    const lifePercentage = (currentMonster.life / currentMonster.maxLife) * 100;
+    const {currentMonster, monsterLife, isAttacking} = useMonster();
+    const lifePercentage = (monsterLife / currentMonster.maxLife) * 100;
 
     return <div>
         <div className="space-y-2">
@@ -22,7 +23,7 @@ export function Monster() {
         <div className="space-y-2">
             <div className="flex justify-between text-sm">
                 <span>体力</span>
-                <span>{currentMonster.life}/{currentMonster.maxLife}</span>
+                <span>{monsterLife}/{currentMonster.maxLife}</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-4">
                 <div

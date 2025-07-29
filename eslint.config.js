@@ -19,5 +19,10 @@ export default tseslint.config([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
-  },
+  },{
+    "plugins": ["react-hooks"],
+    "rules": {
+      "react-hooks/exhaustive-deps": "error" // 🚨 Error when missing dependencies
+    }
+  }
 ])

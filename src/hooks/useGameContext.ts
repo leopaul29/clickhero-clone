@@ -1,4 +1,4 @@
-import {GameContext} from "../context/GameContext.tsx";
+import {GameContext} from "../contexts/GameContext.tsx";
 import {useContext} from "react";
 
 export const useGameContext = () => {

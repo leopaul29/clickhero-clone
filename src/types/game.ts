@@ -21,15 +21,28 @@ export interface Bonus {
 }
 
 export interface GameContextType {
+    persistentData: PersistentState;
+
+    monsterData: {
+        currentMonster: Monster;
+        monsterLife: number;
+    };
+    combatData: {
+        isAttacking: boolean;
+        combatLog: string[];
+    };
+    actions: {
+        attackMonster: () => void;
+        applyDps: () => void;
+        buyBonus: (bonus: Bonus) => void;
+        clearProgress: () => void;
+    };
+}
+
+export interface PersistentState {
     gold: number;
     power: number;
     dps: number;
-    currentMonster: Monster;
-    isAttacking: boolean;
-    attackMonster: () => void;
-    applyDps: () => void;
     bonuses: Bonus[];
-    buyBonus: (bonus: Bonus) => void;
-    combatLog: string[];
-    clearProgress: () => void;
+    currentMonsterId: number;
 }

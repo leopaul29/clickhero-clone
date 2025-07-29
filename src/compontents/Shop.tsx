@@ -1,7 +1,15 @@
-import {useGameContext} from "../hooks/UseGameContext.tsx";
+import type {Bonus} from "../types/game.ts";
+import {usePlayer} from "../hooks/usePlayer.ts";
+import {useShop} from "../hooks/useShop.ts";
 
+/**
+ * Display bonuses player can buy with gold by clicking on buy button
+ * buy button is disabled when not enough gold
+ * @constructor
+ */
 export function Shop() {
-    const {bonuses, buyBonus, gold} = useGameContext();
+    const {gold, bonuses} = usePlayer();
+    const {buyBonus} = useShop();
 
     return <div className="bg-white rounded-lg shadow-xl p-6 japanese-paper min-w-[500px]">
         <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
@@ -9,7 +17,7 @@ export function Shop() {
         </h2>
 
         <div className="space-y-4">
-            {bonuses.map(bonus => (
+            {bonuses.map((bonus:Bonus) => (
                 <div key={bonus.name} className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 border border-yellow-200">
                     <div className="flex items-center justify-between gap-5">
                         <div className="flex items-center space-x-3">
