@@ -1,12 +1,11 @@
-import {useGameContext} from "../hooks/UseGameContext.tsx";
-import {BrushCleaning, Coins, Sword, Zap} from "lucide-react";
+import {/*BrushCleaning,*/ Coins, Sword, Zap} from "lucide-react";
+import {usePlayer} from "../hooks/usePlayer.ts";
 /**
  * Header component displaying player stats
  * @constructor
  */
 export function Header() {
-    const {gold, clearProgress, power, dps} = useGameContext();
-
+    const {gold, power, dps} = usePlayer();
 
     return <div className="bg-gradient-to-r from-red-900 to-red-800 text-white p-4 shadow-lg">
             <div className="container mx-auto flex justify-center items-center">
@@ -26,12 +25,15 @@ export function Header() {
                         <span className="text-lg">{dps}</span>
                         <span className="text-sm">DPS</span>
                     </div>
-                    <div className="flex items-center space-x-2">
-                        <button className="button" onClick={clearProgress}>
-                            <BrushCleaning className="w-5 h-5 text-green-300" />
-                            <span className="text-lg">Clear progress</span>
-                        </button>
-                    </div>
+                    {/*<div className="flex items-center space-x-2">*/}
+                    {/*    <button*/}
+                    {/*        // onClick={() => clearProgress()}*/}
+                    {/*        className="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"*/}
+                    {/*    >*/}
+                    {/*        <BrushCleaning className="w-5 h-5" />*/}
+                    {/*        <span>Clear progress</span>*/}
+                    {/*    </button>*/}
+                    {/*</div>*/}
                 </div>
             </div>
         </div>

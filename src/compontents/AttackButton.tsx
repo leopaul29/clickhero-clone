@@ -1,7 +1,12 @@
-import {useGameContext} from "../hooks/UseGameContext.tsx";
+import {useCombat} from "../hooks/useCombat.ts";
 
+/**
+ * Attack button
+ * Is disable during 300ms after clicking to prevent spamming
+ * @constructor
+ */
 export function AttackButton() {
-    const {attackMonster, isAttacking} = useGameContext();
+    const {attackMonster, isAttacking} = useCombat();
 
     return (
         <button
