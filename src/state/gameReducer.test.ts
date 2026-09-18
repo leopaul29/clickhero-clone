@@ -1,11 +1,11 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {createInitialGameState, gameReducer, MAX_LOG_ENTRIES} from './gameReducer.ts';
-import {BONUSES, MONSTERS} from '../data/monsters.ts';
+import {BONUSES} from '../data/monsters.ts';
+import {HANDCRAFTED_DEPTH, monsterAt} from '../utils/bestiary.ts';
 import type {GameState} from '../types/game.ts';
 
-const KAPPA = MONSTERS[0];
-const TENGU = MONSTERS[1];
-const DRAGON = MONSTERS[MONSTERS.length - 1];
+const KAPPA = monsterAt(1);
+const TENGU = monsterAt(2);
 
 const state = (over: Partial<GameState> = {}): GameState => ({
     ...createInitialGameState(),
@@ -28,20 +28,37 @@ describe('ATTACK', () => {
 });
 
 describe('killing a monster', () => {
-    it('pays the reward and advances to the next monster at full life', () => {
+    it('pays the reward and advances to the next depth at full life', () => {
         const next = gameReducer(state({power: 999, gold: 0, monsterLife: KAPPA.life}), {type: 'ATTACK'});
 
         expect(next.gold).toBe(KAPPA.goldReward);
-        expect(next.currentMonsterId).toBe(TENGU.id);
+        expect(next.depth).toBe(2);
         expect(next.monsterLife).toBe(TENGU.life);
     });
 
-    it('wraps back to the first monster after the last', () => {
+    // The bestiary used to wrap with `% MONSTERS.length`, sending a maxed-out player
+    // back to a 15 HP Kappa forever. Descending is now endless.
+    it('descends past the handcrafted opening instead of wrapping', () => {
+        const last = monsterAt(HANDCRAFTED_DEPTH);
         const next = gameReducer(
-            state({power: 999, currentMonsterId: DRAGON.id, monsterLife: DRAGON.life}),
+            state({power: 10_000, depth: HANDCRAFTED_DEPTH, monsterLife: last.life}),
             {type: 'ATTACK'},
         );
-        expect(next.currentMonsterId).toBe(KAPPA.id);
+
+        expect(next.depth).toBe(HANDCRAFTED_DEPTH + 1);
+        expect(next.monsterLife).toBeGreaterThan(last.life);
+    });
+
+    it('uses supplied flavour for the next depth when there is any', () => {
+        const flavor = {name: 'Test Yokai', nameJp: 'テスト', emoji: '🎴', description: 'A generated one'};
+        const last = monsterAt(HANDCRAFTED_DEPTH);
+        const next = gameReducer(
+            state({power: 10_000, depth: HANDCRAFTED_DEPTH, monsterLife: last.life}),
+            {type: 'ATTACK', nextFlavor: flavor},
+        );
+
+        expect(monsterAt(next.depth, flavor).name).toBe('Test Yokai');
+        expect(next.monsterLife).toBe(monsterAt(HANDCRAFTED_DEPTH + 1).life);
     });
 
     // damageMonster used to read monsterLife from a stale closure, so a click and a
@@ -52,7 +69,7 @@ describe('killing a monster', () => {
         const afterBoth = gameReducer(gameReducer(start, {type: 'ATTACK'}), {type: 'TICK_DPS'});
 
         expect(afterBoth.gold).toBe(KAPPA.goldReward + TENGU.goldReward);
-        expect(afterBoth.currentMonsterId).toBe(MONSTERS[2].id);
+        expect(afterBoth.depth).toBe(3);
     });
 });
 

@@ -8,9 +8,11 @@ export const useMonster = () => {
     return useMemo(() => ({
         currentMonster: context.monsterData.currentMonster,
         monsterLife: context.monsterData.monsterLife,
+        depth: context.monsterData.depth,
         isAttacking: context.combatData.isAttacking
     }), [
         context.monsterData.currentMonster,
         context.monsterData.monsterLife,
+        context.monsterData.depth,
         context.combatData.isAttacking]);
 };

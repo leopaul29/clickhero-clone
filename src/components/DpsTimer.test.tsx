@@ -6,12 +6,12 @@ import {GameContextProvider} from '../contexts/GameContextProvider.tsx';
 import {useCombat} from '../hooks/useCombat.ts';
 import {initialState, loadState, saveState} from '../utils/storage.ts';
 import type {PersistentState} from '../types/game.ts';
-import {MONSTERS} from '../data/monsters.ts';
+import {HANDCRAFTED_DEPTH, monsterAt} from '../utils/bestiary.ts';
 
-const DRAGON = MONSTERS[MONSTERS.length - 1];
+const DRAGON = monsterAt(HANDCRAFTED_DEPTH);
 
 const seed = (over: Partial<PersistentState>) =>
-    saveState({...initialState(), currentMonsterId: DRAGON.id, monsterLife: DRAGON.life, ...over});
+    saveState({...initialState(), depth: DRAGON.depth, monsterLife: DRAGON.life, ...over});
 
 const renderGame = () => render(<GameContextProvider><App/></GameContextProvider>);
 

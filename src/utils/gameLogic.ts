@@ -1,15 +1,4 @@
-import {MONSTERS} from "../data/monsters.ts";
-import type {Bonus, BonusEffect, Monster} from "../types/game.ts";
-
-export const getMonsterById = (currentId?: number): Monster | undefined => {
-    return MONSTERS.find(m => m.id === currentId);
-}
-
-export const getNextMonsterId = (currentId?: number): number => {
-    const currentIndex = MONSTERS.findIndex(m => m.id === currentId);
-    const nextIndex = (currentIndex + 1) % MONSTERS.length;
-    return MONSTERS[nextIndex].id
-}
+import type {Bonus, BonusEffect} from "../types/game.ts";
 
 export const findBonusByEffect = (bonuses: Bonus[], effect: BonusEffect): Bonus | undefined => {
     return bonuses.find(b => b.effect === effect);
