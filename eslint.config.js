@@ -19,10 +19,11 @@ export default tseslint.config([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
-  },{
-    "plugins": ["react-hooks"],
-    "rules": {
-      "react-hooks/exhaustive-deps": "error" // 🚨 Error when missing dependencies
-    }
+    rules: {
+      // Flat config takes a rules object here; the plugin is already supplied by
+      // reactHooks.configs['recommended-latest'] above. This rule is what catches
+      // the unstable-callback bug that silently disabled the DPS timer.
+      'react-hooks/exhaustive-deps': 'error',
+    },
   }
 ])

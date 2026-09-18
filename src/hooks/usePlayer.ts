@@ -8,6 +8,7 @@ export const usePlayer = () => {
         gold: context.persistentData.gold,
         power: context.persistentData.power,
         dps: context.persistentData.dps,
-        bonuses: context.persistentData.bonuses
-    }), [context.persistentData]);
+        bonuses: context.persistentData.bonuses,
+        clearProgress: context.actions.clearProgress
+    }), [context.persistentData, context.actions.clearProgress]);
 };
