@@ -1,7 +1,7 @@
 import './App.css'
-import {Header} from "./compontents/Header.tsx";
-import {Shop} from "./compontents/Shop.tsx";
-import {BattleZone} from "./compontents/BattleZone.tsx";
+import {Header} from "./components/Header.tsx";
+import {Shop} from "./components/Shop.tsx";
+import {BattleZone} from "./components/BattleZone.tsx";
 
 function App() {
     return (
@@ -9,7 +9,7 @@ function App() {
             <div>
                 <Header/>
             </div>
-            <div className="flex flex-row gap-5 m-5 justify-center">
+            <div className="flex flex-col lg:flex-row gap-5 m-3 sm:m-5 justify-center items-stretch lg:items-start">
                 <Shop/>
                 <BattleZone/>
             </div>

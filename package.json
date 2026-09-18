@@ -1,5 +1,5 @@
 {
-  "name": "untitled",
+  "name": "clickhero-clone",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,7 +7,13 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "check:orphans": "node scripts/check-orphans.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify": "npm run typecheck && npm run lint && npm run check:orphans && npm run test && npm run build",
+    "preview": "vite preview",
+    "prepare": "git config core.hooksPath .githooks || true"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",
@@ -18,6 +24,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.5.2",
@@ -25,8 +33,10 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.2.0",
+    "jsdom": "^30.1.0",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.34.1",
-    "vite": "^7.0.0"
+    "vite": "^7.0.0",
+    "vitest": "^5.0.1"
   }
 }

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Runs the same gate as CI before anything leaves the machine.
+# Enable once per clone:  git config core.hooksPath .githooks
+# Bypass deliberately:    git push --no-verify
+set -euo pipefail
+
+echo "pre-push: running verify gate…"
+if ! npm run verify; then
+  echo
+  echo "pre-push: verify FAILED — push aborted."
+  echo "Fix it, or bypass deliberately with: git push --no-verify"
+  exit 1
+fi
+echo "pre-push: verify passed."
