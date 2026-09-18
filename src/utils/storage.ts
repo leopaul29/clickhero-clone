@@ -1,11 +1,11 @@
 import type {Bonus, PersistentState} from "../types/game.ts";
-import {BONUSES, MONSTERS} from "../data/monsters.ts";
-import {getMonsterById} from "./gameLogic.ts";
+import {BONUSES} from "../data/monsters.ts";
+import {clampDepth, monsterAt} from "./bestiary.ts";
 
 const STORAGE_KEY = "clickhero-japan";
 
 /** Bumped whenever the saved shape changes in a way older saves cannot satisfy. */
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 interface SavedGame {
     version: number;
@@ -18,8 +18,8 @@ export function initialState(): PersistentState {
         power: 1,
         dps: 0,
         bonuses: BONUSES.map(b => ({...b})),
-        currentMonsterId: MONSTERS[0].id,
-        monsterLife: MONSTERS[0].life,
+        depth: 1,
+        monsterLife: monsterAt(1).life,
     };
 }
 
@@ -51,19 +51,33 @@ function reconcileBonuses(saved: unknown): Bonus[] {
     });
 }
 
-function isSavedGame(data: unknown): data is SavedGame {
-    if (!data || typeof data !== 'object') return false;
+/**
+ * v2 identified the current enemy by `currentMonsterId` into a fixed list of five.
+ * v3 replaced that with an endless `depth`. The ids were 1..5 in order, so they map
+ * straight across and a save from before the endless bestiary keeps its progress.
+ */
+function migrate(raw: Record<string, unknown>): Record<string, unknown> | null {
+    if (raw.version === SCHEMA_VERSION) {
+        return raw.state && typeof raw.state === 'object'
+            ? raw.state as Record<string, unknown>
+            : null;
+    }
 
-    const obj = data as Record<string, unknown>;
-    if (obj.version !== SCHEMA_VERSION) return false;
-    if (!obj.state || typeof obj.state !== 'object') return false;
+    if (raw.version === 2 && raw.state && typeof raw.state === 'object') {
+        const old = raw.state as Record<string, unknown>;
+        const {currentMonsterId, ...rest} = old;
+        return {...rest, depth: isFiniteNumber(currentMonsterId) ? currentMonsterId : 1};
+    }
 
-    const state = obj.state as Record<string, unknown>;
+    return null;
+}
+
+function isPersistentState(state: Record<string, unknown>): boolean {
     return (
         isFiniteNumber(state.gold) &&
         isFiniteNumber(state.power) &&
         isFiniteNumber(state.dps) &&
-        isFiniteNumber(state.currentMonsterId) &&
+        isFiniteNumber(state.depth) &&
         isFiniteNumber(state.monsterLife) &&
         Array.isArray(state.bonuses)
     );
@@ -82,24 +96,28 @@ export function loadState(): PersistentState {
 
         const parsedData: unknown = JSON.parse(rawData);
 
-        if (!isSavedGame(parsedData)) {
+        if (!parsedData || typeof parsedData !== 'object') {
             console.warn('Invalid save data, starting a new game');
             return fresh;
         }
 
-        const saved = parsedData.state;
-        const monster = getMonsterById(saved.currentMonsterId);
+        const migrated = migrate(parsedData as Record<string, unknown>);
 
-        // A save pointing at a monster that no longer exists restarts the bestiary
-        // rather than locking the player on a missing enemy.
-        if (!monster) return fresh;
+        if (!migrated || !isPersistentState(migrated)) {
+            console.warn('Invalid save data, starting a new game');
+            return fresh;
+        }
+
+        const saved = migrated as unknown as PersistentState;
+        const depth = clampDepth(saved.depth);
+        const monster = monsterAt(depth);
 
         return {
             gold: saved.gold,
             power: saved.power,
             dps: saved.dps,
             bonuses: reconcileBonuses(saved.bonuses),
-            currentMonsterId: monster.id,
+            depth,
             monsterLife: Math.min(Math.max(saved.monsterLife, 1), monster.maxLife),
         };
     } catch (error) {

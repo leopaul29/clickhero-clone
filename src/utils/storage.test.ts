@@ -1,6 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {clearLocalStorage, initialState, loadState, saveState} from './storage.ts';
-import {BONUSES, MONSTERS} from '../data/monsters.ts';
+import {BONUSES} from '../data/monsters.ts';
+import {monsterAt} from './bestiary.ts';
 
 const STORAGE_KEY = 'clickhero-japan';
 
@@ -25,24 +26,48 @@ describe('loadState', () => {
 
     it('falls back to a new game when a field has the wrong type', () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({version: 2, state: {...initialState(), gold: 'lots'}}));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({version: 3, state: {...initialState(), gold: 'lots'}}));
         expect(loadState()).toEqual(initialState());
     });
 
-    it('ignores a save written by an older schema', () => {
+    it('ignores a save with no recognisable version', () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
         localStorage.setItem(STORAGE_KEY, JSON.stringify({gold: 20, power: 1, dps: 0, bonuses: []}));
         expect(loadState()).toEqual(initialState());
     });
 
-    it('restarts the bestiary when the saved monster no longer exists', () => {
-        saveState({...initialState(), currentMonsterId: 4242, gold: 77});
-        expect(loadState()).toEqual(initialState());
+    it('clamps a saved life that exceeds the monster maximum', () => {
+        saveState({...initialState(), depth: 1, monsterLife: 99999});
+        expect(loadState().monsterLife).toBe(monsterAt(1).maxLife);
     });
 
-    it('clamps a saved life that exceeds the monster maximum', () => {
-        saveState({...initialState(), currentMonsterId: MONSTERS[0].id, monsterLife: 99999});
-        expect(loadState().monsterLife).toBe(MONSTERS[0].maxLife);
+    it('accepts a depth beyond the handcrafted opening', () => {
+        saveState({...initialState(), depth: 40, monsterLife: 10});
+        expect(loadState().depth).toBe(40);
+    });
+});
+
+describe('schema migration', () => {
+    // v2 pointed at one of five monsters by id; v3 descends by depth. The ids were
+    // 1..5 in order, so a save from before the endless bestiary keeps its progress.
+    it('carries a v2 save forward, mapping currentMonsterId to depth', () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            version: 2,
+            state: {gold: 640, power: 33, dps: 12, bonuses: [], currentMonsterId: 4, monsterLife: 50},
+        }));
+
+        const loaded = loadState();
+
+        expect(loaded.depth).toBe(4);
+        expect(loaded.gold).toBe(640);
+        expect(loaded.power).toBe(33);
+        expect(loaded.dps).toBe(12);
+    });
+
+    it('starts a new game for a version it does not know', () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({version: 99, state: initialState()}));
+        expect(loadState()).toEqual(initialState());
     });
 });
 

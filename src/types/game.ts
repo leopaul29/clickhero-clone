@@ -1,15 +1,30 @@
 /** What buying a bonus actually improves. Drives game logic — never the array order. */
 export type BonusEffect = 'power' | 'dps' | 'goldMultiplier';
 
-export interface Monster {
-    id: number,
+/** Where a monster's flavour came from. Stats are always computed by the game. */
+export type MonsterOrigin = 'handcrafted' | 'generated' | 'procedural';
+
+/** The part of a monster a language model is allowed to invent. */
+export interface MonsterFlavor {
     name: string,
     nameJp: string,
+    emoji: string,
+    description: string,
+}
+
+/** A hand-written monster from the opening act; its depth is its position in the list. */
+export interface HandcraftedMonster extends MonsterFlavor {
+    life: number,
+    goldReward: number,
+}
+
+export interface Monster extends MonsterFlavor {
+    /** How far down the player is. Also the monster's identity — 1, 2, 3, … forever. */
+    depth: number,
     life: number,
     maxLife: number,
     goldReward: number,
-    emoji: string,
-    description: string,
+    origin: MonsterOrigin,
 }
 
 export interface Bonus {
@@ -31,7 +46,7 @@ export interface PersistentState {
     power: number;
     dps: number;
     bonuses: Bonus[];
-    currentMonsterId: number;
+    depth: number;
     monsterLife: number;
 }
 
@@ -47,6 +62,7 @@ export interface GameContextType {
     monsterData: {
         currentMonster: Monster;
         monsterLife: number;
+        depth: number;
     };
     combatData: {
         isAttacking: boolean;

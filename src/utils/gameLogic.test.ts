@@ -1,31 +1,11 @@
 import {describe, expect, it} from 'vitest';
-import {calculateReward, findBonusByEffect, getMonsterById, getNextMonsterId, updateBonusesStats} from './gameLogic.ts';
-import {BONUSES, MONSTERS} from '../data/monsters.ts';
+import {calculateReward, findBonusByEffect, updateBonusesStats} from './gameLogic.ts';
+import {BONUSES} from '../data/monsters.ts';
 import type {Bonus} from '../types/game.ts';
 
 const bonus = (over: Partial<Bonus> = {}): Bonus => ({
     id: 99, name: 'Test', nameJp: 'テスト', description: '', icon: '', effect: 'power',
     power: 5, level: 0, cost: 15, ...over,
-});
-
-describe('getMonsterById', () => {
-    it('finds a monster by id', () => {
-        expect(getMonsterById(1)?.name).toBe('Kappa');
-    });
-
-    it('returns undefined for an unknown id', () => {
-        expect(getMonsterById(999)).toBeUndefined();
-    });
-});
-
-describe('getNextMonsterId', () => {
-    it('advances through the bestiary', () => {
-        expect(getNextMonsterId(1)).toBe(2);
-    });
-
-    it('wraps around after the last monster', () => {
-        expect(getNextMonsterId(MONSTERS[MONSTERS.length - 1].id)).toBe(MONSTERS[0].id);
-    });
 });
 
 describe('calculateReward', () => {

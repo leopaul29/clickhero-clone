@@ -9,13 +9,16 @@
 import {readdirSync, readFileSync, statSync} from 'node:fs';
 import {dirname, join, relative, resolve} from 'node:path';
 
-const SRC = resolve('src');
+const ROOTS = ['src', 'api'].map((dir) => resolve(dir));
 const CODE = /\.tsx?$/;
 const IS_TEST = /\.test\.tsx?$/;
 const DECLARATION = /\.d\.ts$/;
 
-/** Entry points: what a bundler or the test runner starts from. */
+/** Entry points: what a bundler, a serverless platform, or the test runner starts from. */
 const ENTRIES = ['src/main.tsx'];
+
+/** Every non-underscored file directly under api/ is a route the platform invokes. */
+const isApiRoute = (file) => /(^|\/)api\/[^_/][^/]*\.tsx?$/.test(relative(process.cwd(), file).replace(/\\/g, '/'));
 
 function walk(dir) {
     return readdirSync(dir).flatMap((name) => {
@@ -46,8 +49,11 @@ function importsOf(file) {
 }
 
 export function findOrphans() {
-    const all = walk(SRC).filter((f) => CODE.test(f) && !DECLARATION.test(f));
-    const entries = [...ENTRIES.map((e) => resolve(e)), ...all.filter((f) => IS_TEST.test(f))];
+    const all = ROOTS.flatMap(walk).filter((f) => CODE.test(f) && !DECLARATION.test(f));
+    const entries = [
+        ...ENTRIES.map((e) => resolve(e)),
+        ...all.filter((f) => IS_TEST.test(f) || isApiRoute(f)),
+    ];
 
     const reached = new Set();
     const queue = entries.filter((e) => all.includes(e));
@@ -65,8 +71,8 @@ export function findOrphans() {
 if (process.argv.includes('--self-check')) {
     // The gate must be seen failing before it is trusted (VERIFY.md).
     const {mkdirSync, writeFileSync, rmSync} = await import('node:fs');
-    const decoy = join(SRC, '__orphan_self_check__.ts');
-    mkdirSync(SRC, {recursive: true});
+    const decoy = join(ROOTS[0], '__orphan_self_check__.ts');
+    mkdirSync(ROOTS[0], {recursive: true});
     writeFileSync(decoy, 'export const unused = 1;\n');
     const found = findOrphans();
     rmSync(decoy);
@@ -81,10 +87,10 @@ if (process.argv.includes('--self-check')) {
 const orphans = findOrphans();
 
 if (orphans.length > 0) {
-    console.error('Unreachable modules (not imported from main.tsx or any test):\n');
+    console.error('Unreachable modules (not reachable from main.tsx, an api/ route, or a test):\n');
     for (const file of orphans) console.error(`  ${file}`);
     console.error('\nWire them up or delete them. Dead code that type-checks is still dead.');
     process.exit(1);
 }
 
-console.log('check:orphans — every module under src/ is reachable');
+console.log('check:orphans — every module under src/ and api/ is reachable');
