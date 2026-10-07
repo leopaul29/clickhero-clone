@@ -119,6 +119,30 @@ export function playKill(): void {
     tone(ctx, {frequency: 300, endFrequency: 90, duration: 0.14, type: "triangle", gain: 0.05});
 }
 
+/**
+ * A paper snap, then the talisman settling — the seal.
+ *
+ * Short on purpose: the catch resolves in a single frame, so the sound cannot be a
+ * fanfare the player waits through a hundred times.
+ */
+export function playSeal(): void {
+    const ctx = audio();
+    if (!ctx) return;
+
+    tone(ctx, {frequency: 2400, endFrequency: 900, duration: 0.05, type: "square", gain: 0.05});
+    tone(ctx, {frequency: 660, endFrequency: 990, duration: 0.16, type: "sine", gain: 0.07, delay: 0.04});
+}
+
+/** The same snap with a bell over it: a species entering the codex for the first time. */
+export function playFirstSeal(): void {
+    const ctx = audio();
+    if (!ctx) return;
+
+    playSeal();
+    tone(ctx, {frequency: 1046, duration: 0.3, type: "sine", gain: 0.06, delay: 0.1});
+    tone(ctx, {frequency: 1568, duration: 0.4, type: "sine", gain: 0.04, delay: 0.16});
+}
+
 /** Rising pair for a purchase. */
 export function playPurchase(): void {
     const ctx = audio();
