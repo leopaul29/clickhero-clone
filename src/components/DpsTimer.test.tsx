@@ -4,7 +4,7 @@ import {useEffect} from 'react';
 import App from '../App.tsx';
 import {GameContextProvider} from '../contexts/GameContextProvider.tsx';
 import {useCombat} from '../hooks/useCombat.ts';
-import {initialState, loadState, saveState} from '../utils/storage.ts';
+import {clearSave, initialState, loadState, saveState} from '../utils/storage.ts';
 import type {PersistentState} from '../types/game.ts';
 import {HANDCRAFTED_DEPTH, monsterAt} from '../utils/bestiary.ts';
 
@@ -25,6 +25,7 @@ const attackButton = () => screen.getByRole('button', {name: /攻撃/});
 
 beforeEach(() => {
     localStorage.clear();
+    clearSave();
     vi.useFakeTimers();
 });
 
