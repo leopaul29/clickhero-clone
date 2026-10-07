@@ -1,6 +1,9 @@
 import {beforeEach, describe, expect, it} from 'vitest';
-import {createInitialGameState, gameReducer, MAX_LOG_ENTRIES} from './gameReducer.ts';
+import {
+    createInitialGameState, CRIT_CHANCE, CRIT_MULTIPLIER, gameReducer, isCritRoll, MAX_LOG_ENTRIES,
+} from './gameReducer.ts';
 import {BONUSES} from '../data/monsters.ts';
+import {initialState} from '../utils/storage.ts';
 import {HANDCRAFTED_DEPTH, monsterAt} from '../utils/bestiary.ts';
 import type {GameState} from '../types/game.ts';
 
@@ -145,5 +148,95 @@ describe('BONUSES immutability', () => {
         const before = JSON.parse(JSON.stringify(BONUSES));
         gameReducer(state({gold: 9999}), {type: 'BUY_BONUS', bonus: BONUSES[0]});
         expect(BONUSES).toEqual(before);
+    });
+});
+
+describe('critical hits', () => {
+    const crit = CRIT_CHANCE / 2;        // any roll under the threshold
+    const normal = CRIT_CHANCE + 0.01;   // any roll over it
+
+    it('multiplies the blow', () => {
+        const next = gameReducer(state({power: 7, monsterLife: 10_000}), {type: 'ATTACK', roll: crit});
+
+        expect(next.monsterLife).toBe(10_000 - 7 * CRIT_MULTIPLIER);
+        expect(next.lastHit?.isCrit).toBe(true);
+    });
+
+    it('leaves an ordinary roll ordinary', () => {
+        const next = gameReducer(state({power: 7, monsterLife: 10_000}), {type: 'ATTACK', roll: normal});
+
+        expect(next.monsterLife).toBe(10_000 - 7);
+        expect(next.lastHit?.isCrit).toBe(false);
+    });
+
+    // Randomness stays outside the reducer, as it does for generated flavour, so
+    // no test ever has to stub a global to get a deterministic result.
+    it('never crits when no roll was supplied', () => {
+        const next = gameReducer(state({power: 7, monsterLife: 10_000}), {type: 'ATTACK'});
+
+        expect(next.monsterLife).toBe(10_000 - 7);
+        expect(next.lastHit?.isCrit).toBe(false);
+    });
+
+    it('names the critical in the combat log', () => {
+        const next = gameReducer(state({power: 7, monsterLife: 10_000}), {type: 'ATTACK', roll: crit});
+        expect(next.combatLog.at(-1)).toContain('会心の一撃');
+    });
+
+    it('does not let automatic damage crit', () => {
+        const next = gameReducer(state({dps: 7, monsterLife: 10_000}), {type: 'TICK_DPS'});
+        expect(next.lastHit?.isCrit).toBe(false);
+    });
+
+    describe('isCritRoll', () => {
+        it.each([[0, true], [CRIT_CHANCE - 0.001, true], [CRIT_CHANCE, false], [0.9, false]])(
+            'maps %s to %s', (roll, expected) => {
+                expect(isCritRoll(roll)).toBe(expected);
+            });
+
+        it('is false for a missing roll', () => {
+            expect(isCritRoll(undefined)).toBe(false);
+        });
+    });
+});
+
+describe('lastHit', () => {
+    it('records the blow for the UI to animate', () => {
+        const next = gameReducer(state({power: 4, monsterLife: 100}), {type: 'ATTACK'});
+
+        expect(next.lastHit).toMatchObject({amount: 4, isCrit: false, killed: false, source: 'click'});
+    });
+
+    it('marks automatic damage as dps, so it can stay silent', () => {
+        const next = gameReducer(state({dps: 4, monsterLife: 100}), {type: 'TICK_DPS'});
+        expect(next.lastHit?.source).toBe('dps');
+    });
+
+    it('flags the killing blow', () => {
+        const next = gameReducer(state({power: 9_999, monsterLife: 10}), {type: 'ATTACK'});
+        expect(next.lastHit?.killed).toBe(true);
+    });
+
+    // Two identical hits must still be distinguishable, or the second one does not
+    // replay its animation.
+    it('gives every hit a new id, even identical ones', () => {
+        const first = gameReducer(state({power: 4, monsterLife: 100}), {type: 'ATTACK'});
+        const second = gameReducer({...first, isAttacking: false}, {type: 'ATTACK'});
+
+        expect(second.lastHit!.id).toBeGreaterThan(first.lastHit!.id);
+        expect(second.lastHit!.amount).toBe(first.lastHit!.amount);
+    });
+
+    it('starts empty and is cleared by a reset', () => {
+        expect(createInitialGameState().lastHit).toBeNull();
+
+        const hit = gameReducer(state({power: 4, monsterLife: 100}), {type: 'ATTACK'});
+        expect(gameReducer(hit, {type: 'RESET'}).lastHit).toBeNull();
+    });
+
+    it('is not written to the save file', () => {
+        const next = gameReducer(state({power: 4, monsterLife: 100}), {type: 'ATTACK'});
+        expect(Object.keys(initialState())).not.toContain('lastHit');
+        expect(next.lastHit).not.toBeNull();
     });
 });

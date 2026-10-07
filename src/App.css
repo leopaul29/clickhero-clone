@@ -4,11 +4,103 @@
     background-size: 20px 20px;
 }
 
-@keyframes attack-pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+/* ── Hit feedback ────────────────────────────────────────────────────────────
+   A clicker is mostly the feel of the click, so every one of these is short:
+   they replay several times a second and anything slow reads as lag. */
+
+@keyframes recoil {
+    0%   { transform: translateY(0) scale(1); }
+    25%  { transform: translateY(6px) scale(0.92); }
+    60%  { transform: translateY(-2px) scale(1.04); }
+    100% { transform: translateY(0) scale(1); }
 }
-.attack-animation {
-    animation: attack-pulse 0.3s ease-in-out;
+.recoil {
+    animation: recoil 0.18s ease-out;
+}
+
+@keyframes recoil-crit {
+    0%   { transform: translateY(0) scale(1) rotate(0deg); }
+    20%  { transform: translateY(10px) scale(0.84) rotate(-4deg); }
+    55%  { transform: translateY(-6px) scale(1.12) rotate(3deg); }
+    100% { transform: translateY(0) scale(1) rotate(0deg); }
+}
+.recoil-crit {
+    animation: recoil-crit 0.32s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+@keyframes shake {
+    0%, 100% { transform: translate(0, 0); }
+    20%      { transform: translate(-3px, 2px); }
+    40%      { transform: translate(3px, -2px); }
+    60%      { transform: translate(-2px, -1px); }
+    80%      { transform: translate(2px, 1px); }
+}
+.shake {
+    animation: shake 0.16s ease-in-out;
+}
+
+@keyframes shake-hard {
+    0%, 100% { transform: translate(0, 0); }
+    15%      { transform: translate(-9px, 5px); }
+    30%      { transform: translate(9px, -5px); }
+    45%      { transform: translate(-7px, -4px); }
+    60%      { transform: translate(7px, 4px); }
+    80%      { transform: translate(-3px, 2px); }
+}
+.shake-hard {
+    animation: shake-hard 0.34s ease-in-out;
+}
+
+/* The damage number: up and away, fading as it goes. */
+@keyframes float-damage {
+    0%   { opacity: 0; transform: translate(-50%, 0) scale(0.7); }
+    15%  { opacity: 1; transform: translate(-50%, -10px) scale(1.1); }
+    100% { opacity: 0; transform: translate(-50%, -64px) scale(0.95); }
+}
+.float-damage {
+    animation: float-damage 0.75s ease-out forwards;
+}
+
+@keyframes float-damage-crit {
+    0%   { opacity: 0; transform: translate(-50%, 0) scale(0.6) rotate(-6deg); }
+    18%  { opacity: 1; transform: translate(-50%, -16px) scale(1.5) rotate(3deg); }
+    100% { opacity: 0; transform: translate(-50%, -92px) scale(1.1) rotate(0deg); }
+}
+.float-damage-crit {
+    animation: float-damage-crit 1s cubic-bezier(0.1, 1.2, 0.3, 1) forwards;
+}
+
+/* Kill burst. Each particle gets its own --angle and --distance inline. */
+@keyframes burst {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) rotate(var(--angle)) translateX(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(var(--angle)) translateX(var(--distance)) scale(0.3);
+    }
+}
+.burst-particle {
+    animation: burst 0.6s ease-out forwards;
+}
+
+/*
+ * One switch for everyone who asked their system not to animate things. Screen
+ * shake in particular is a known migraine and nausea trigger, so it goes to zero
+ * rather than being merely reduced — the numbers and colours still convey the hit.
+ */
+@media (prefers-reduced-motion: reduce) {
+    .recoil,
+    .recoil-crit,
+    .shake,
+    .shake-hard,
+    .burst-particle {
+        animation: none;
+    }
+
+    .float-damage,
+    .float-damage-crit {
+        animation: float-damage 0.75s ease-out forwards;
+    }
 }
