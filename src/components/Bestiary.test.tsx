@@ -2,7 +2,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {act, cleanup, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import App from '../App.tsx';
 import {GameContextProvider} from '../contexts/GameContextProvider.tsx';
-import {initialState, saveState} from '../utils/storage.ts';
+import {clearSave, initialState, saveState} from '../utils/storage.ts';
 import {clearBestiaryCache} from '../services/bestiaryStore.ts';
 import {HANDCRAFTED_DEPTH, monsterAt, proceduralFlavor} from '../utils/bestiary.ts';
 import type {PersistentState} from '../types/game.ts';
@@ -35,6 +35,7 @@ const flavorFor = (depth: number) => ({
 
 beforeEach(() => {
     localStorage.clear();
+    clearSave();
     clearBestiaryCache();
 });
 

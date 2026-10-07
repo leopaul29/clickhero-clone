@@ -2,7 +2,7 @@ import {type ReactNode, useCallback, useEffect, useMemo, useReducer, useRef, use
 import type {Bonus, Monster, MonsterFlavor, PersistentState} from "../types/game.ts";
 import {monsterAt} from "../utils/bestiary.ts";
 import {generateAhead, getCachedFlavor, subscribeBestiary} from "../services/bestiaryStore.ts";
-import {clearLocalStorage, loadState, saveState} from "../utils/storage.ts";
+import {clearSave, loadState, saveState} from "../utils/storage.ts";
 import {playCrit, playHit, playKill, playPurchase} from "../utils/audio.ts";
 import {createInitialGameState, gameReducer} from "../state/gameReducer.ts";
 import {GameContext} from "./gameContext.ts";
@@ -14,7 +14,7 @@ interface GameContextProviderProps {
 /** How long the attack button stays disabled after a hit. */
 const ATTACK_COOLDOWN_MS = 300;
 
-/** Writes are debounced so a click storm does not hit localStorage on every frame. */
+/** Writes are debounced so a click storm does not rewrite the save cookie on every frame. */
 const SAVE_DEBOUNCE_MS = 400;
 
 export const GameContextProvider = ({children}: GameContextProviderProps) => {
@@ -52,7 +52,7 @@ export const GameContextProvider = ({children}: GameContextProviderProps) => {
     }, []);
 
     const clearProgress = useCallback(() => {
-        clearLocalStorage();
+        clearSave();
         dispatch({type: 'RESET'});
     }, []);
 
