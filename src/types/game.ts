@@ -40,7 +40,7 @@ export interface Bonus {
     cost: number;
 }
 
-/** Everything worth writing to localStorage. */
+/** Everything worth writing to the save cookie. */
 export interface PersistentState {
     gold: number;
     power: number;
