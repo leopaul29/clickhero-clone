@@ -4,7 +4,7 @@ import {monsterAt} from "../utils/bestiary.ts";
 import {isSealable, ofudaCost, sealThresholdFor} from "../utils/capture.ts";
 import {totalDps} from "../utils/shikigami.ts";
 import {generateAhead, getCachedFlavor, subscribeBestiary} from "../services/bestiaryStore.ts";
-import {clearLocalStorage, loadState, saveState} from "../utils/storage.ts";
+import {clearSave, loadState, saveState} from "../utils/storage.ts";
 import {playCrit, playFirstSeal, playHit, playKill, playPurchase, playSeal} from "../utils/audio.ts";
 import {createInitialGameState, gameReducer} from "../state/gameReducer.ts";
 import {GameContext} from "./gameContext.ts";

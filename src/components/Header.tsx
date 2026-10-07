@@ -1,4 +1,4 @@
-import {BrushCleaning, Coins, ScrollText, Sword, Zap} from "lucide-react";
+import {Coins, ScrollText, Sword, Zap} from "lucide-react";
 import {usePlayer} from "../hooks/usePlayer.ts";
 import {useCapture} from "../hooks/useCapture.ts";
 import {SoundToggle} from "./SoundToggle.tsx";
@@ -13,14 +13,8 @@ const formatNumber = (value: number): string => value.toLocaleString('en-US');
  * @constructor
  */
 export function Header() {
-    const {gold, power, dps, clearProgress} = usePlayer();
+    const {gold, power, dps} = usePlayer();
     const {ofuda} = useCapture();
-
-    const onClearProgress = () => {
-        if (window.confirm('Reset all progress? This cannot be undone.')) {
-            clearProgress();
-        }
-    };
 
     return <div className="bg-gradient-to-r from-red-900 to-red-800 text-white p-4 shadow-lg">
             <div className="container mx-auto flex justify-center items-center">

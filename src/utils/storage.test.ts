@@ -1,5 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {clearSave, initialState, loadState, saveState} from './storage.ts';
+import type {Shikigami} from '../types/game.ts';
 import {BONUSES} from '../data/monsters.ts';
 import {monsterAt} from './bestiary.ts';
 import {STARTING_OFUDA} from './capture.ts';
@@ -143,28 +144,69 @@ describe('bonus reconciliation', () => {
     });
 });
 
-describe('cookie storage', () => {
-    it('writes the save to a cookie, not localStorage', () => {
+describe('where the save lives', () => {
+    it('writes the save to localStorage', () => {
         saveState({...initialState(), gold: 77});
-        expect(document.cookie).toContain(`${STORAGE_KEY}=`);
-        expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+
+        expect(localStorage.getItem(STORAGE_KEY)).toContain('"gold":77');
+        expect(document.cookie).not.toContain(`${STORAGE_KEY}=`);
     });
 
-    it('stays well under the 4 KB cookie limit', () => {
-        saveState({...initialState(), gold: Number.MAX_SAFE_INTEGER, depth: 1e9});
-        expect(document.cookie.length).toBeLessThan(1000);
+    it('writes only the player progress of each bonus, not its text', () => {
+        saveState({...initialState(), gold: 77});
+
+        const raw = localStorage.getItem(STORAGE_KEY) ?? '';
+
+        expect(raw).not.toContain('Katana Power');
+        expect(raw).not.toContain('Increases attack power');
     });
 
-    // Saves lived in localStorage before the cookie; a returning player keeps theirs.
-    it('loads a legacy localStorage save, then moves it to the cookie', () => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({version: 3, state: {...initialState(), gold: 4242}}));
+    /**
+     * The reason this is not a cookie. The save was briefly cookie-backed, which refused
+     * anything over 4 KB — and a shikigami collection crosses that at the sixteenth
+     * sealed species, in the middle of the mechanic the whole game is built on. A full
+     * collection is roughly 15 KB and has to survive a round trip untouched.
+     */
+    it('round-trips a collection far larger than a cookie could hold', () => {
+        const shikigami: Record<string, Shikigami> = {};
+
+        for (let i = 1; i <= 100; i++) {
+            const name = `Yokai Number ${i}`;
+            const key = name.toLowerCase();
+            shikigami[key] = {key, name, nameJp: `妖怪第${i}号`, emoji: '👹', depth: i, level: 1 + (i % 9), copies: i % 4};
+        }
+
+        const saved = {...initialState(), gold: 999_999, depth: 100, shikigami};
+        saveState(saved);
+
+        const raw = localStorage.getItem(STORAGE_KEY) ?? '';
+        expect(raw.length).toBeGreaterThan(4_000);
 
         const loaded = loadState();
-        expect(loaded.gold).toBe(4242);
+        expect(Object.keys(loaded.shikigami)).toHaveLength(100);
+        expect(loaded.shikigami).toEqual(shikigami);
+    });
 
-        saveState(loaded);
-        expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+    // The save lived in a cookie for one build; a player who played it keeps their game.
+    it('reads a save left behind by the cookie build, then clears the cookie', () => {
+        const legacy = JSON.stringify({version: 4, state: {...initialState(), gold: 4242}});
+        document.cookie = `${STORAGE_KEY}=${encodeURIComponent(legacy)}; path=/`;
+
         expect(loadState().gold).toBe(4242);
+
+        saveState(loadState());
+
+        expect(document.cookie).not.toContain(`${STORAGE_KEY}=`);
+        expect(loadState().gold).toBe(4242);
+    });
+
+    // Otherwise a stale cookie would quietly outrank a newer localStorage save.
+    it('prefers localStorage over a cookie when both exist', () => {
+        const stale = JSON.stringify({version: 4, state: {...initialState(), gold: 1}});
+        document.cookie = `${STORAGE_KEY}=${encodeURIComponent(stale)}; path=/`;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({version: 4, state: {...initialState(), gold: 5555}}));
+
+        expect(loadState().gold).toBe(5555);
     });
 });
 
