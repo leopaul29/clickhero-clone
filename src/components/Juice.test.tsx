@@ -2,7 +2,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {cleanup, fireEvent, render, screen} from '@testing-library/react';
 import App from '../App.tsx';
 import {GameContextProvider} from '../contexts/GameContextProvider.tsx';
-import {initialState, saveState} from '../utils/storage.ts';
+import {clearSave, initialState, saveState} from '../utils/storage.ts';
 import {resetAudioForTests} from '../utils/audio.ts';
 import {CRIT_CHANCE, CRIT_MULTIPLIER} from '../state/gameReducer.ts';
 import {monsterAt} from '../utils/bestiary.ts';
@@ -20,6 +20,7 @@ const rollsCrit = (yes: boolean) =>
 
 beforeEach(() => {
     localStorage.clear();
+    clearSave();
     resetAudioForTests();
     vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('offline'))));
 });

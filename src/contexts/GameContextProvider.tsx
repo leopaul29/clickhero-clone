@@ -16,7 +16,7 @@ interface GameContextProviderProps {
 /** How long the attack button stays disabled after a hit. */
 const ATTACK_COOLDOWN_MS = 300;
 
-/** Writes are debounced so a click storm does not hit localStorage on every frame. */
+/** Writes are debounced so a click storm does not rewrite the save cookie on every frame. */
 const SAVE_DEBOUNCE_MS = 400;
 
 export const GameContextProvider = ({children}: GameContextProviderProps) => {
@@ -61,7 +61,7 @@ export const GameContextProvider = ({children}: GameContextProviderProps) => {
     const toggleTekagen = useCallback(() => dispatch({type: 'TOGGLE_TEKAGEN'}), []);
 
     const clearProgress = useCallback(() => {
-        clearLocalStorage();
+        clearSave();
         dispatch({type: 'RESET'});
     }, []);
 

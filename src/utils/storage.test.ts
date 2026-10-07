@@ -1,5 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {clearLocalStorage, initialState, loadState, saveState} from './storage.ts';
+import {clearSave, initialState, loadState, saveState} from './storage.ts';
 import {BONUSES} from '../data/monsters.ts';
 import {monsterAt} from './bestiary.ts';
 import {STARTING_OFUDA} from './capture.ts';
@@ -7,7 +7,15 @@ import {collectionWithDps} from '../test/collection.ts';
 
 const STORAGE_KEY = 'clickhero-japan';
 
-beforeEach(() => localStorage.clear());
+/** Store a raw save exactly as the browser would hold it. */
+const setRawCookie = (raw: string) => {
+    document.cookie = `${STORAGE_KEY}=${encodeURIComponent(raw)}; path=/`;
+};
+
+beforeEach(() => {
+    localStorage.clear();
+    clearSave();
+});
 
 describe('loadState', () => {
     it('starts a new game when nothing is stored', () => {
@@ -30,19 +38,19 @@ describe('loadState', () => {
 
     it('falls back to a new game on unparsable JSON', () => {
         vi.spyOn(console, 'error').mockImplementation(() => {});
-        localStorage.setItem(STORAGE_KEY, 'not json {{{');
+        setRawCookie('not json {{{');
         expect(loadState()).toEqual(initialState());
     });
 
     it('falls back to a new game when a field has the wrong type', () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({version: 3, state: {...initialState(), gold: 'lots'}}));
+        setRawCookie(JSON.stringify({version: 3, state: {...initialState(), gold: 'lots'}}));
         expect(loadState()).toEqual(initialState());
     });
 
     it('ignores a save with no recognisable version', () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({gold: 20, power: 1, dps: 0, bonuses: []}));
+        setRawCookie(JSON.stringify({gold: 20, power: 1, dps: 0, bonuses: []}));
         expect(loadState()).toEqual(initialState());
     });
 
@@ -61,7 +69,7 @@ describe('schema migration', () => {
     // v2 pointed at one of five monsters by id; v3 descends by depth. The ids were
     // 1..5 in order, so a save from before the endless bestiary keeps its progress.
     it('carries a v2 save forward, mapping currentMonsterId to depth', () => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        setRawCookie(JSON.stringify({
             version: 2,
             state: {gold: 640, power: 33, dps: 12, bonuses: [], currentMonsterId: 4, monsterLife: 50},
         }));
@@ -94,7 +102,7 @@ describe('schema migration', () => {
 
     it('starts a new game for a version it does not know', () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({version: 99, state: initialState()}));
+        setRawCookie(JSON.stringify({version: 99, state: initialState()}));
         expect(loadState()).toEqual(initialState());
     });
 });
@@ -135,19 +143,50 @@ describe('bonus reconciliation', () => {
     });
 });
 
-describe('clearLocalStorage', () => {
+describe('cookie storage', () => {
+    it('writes the save to a cookie, not localStorage', () => {
+        saveState({...initialState(), gold: 77});
+        expect(document.cookie).toContain(`${STORAGE_KEY}=`);
+        expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+    });
+
+    it('stays well under the 4 KB cookie limit', () => {
+        saveState({...initialState(), gold: Number.MAX_SAFE_INTEGER, depth: 1e9});
+        expect(document.cookie.length).toBeLessThan(1000);
+    });
+
+    // Saves lived in localStorage before the cookie; a returning player keeps theirs.
+    it('loads a legacy localStorage save, then moves it to the cookie', () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({version: 3, state: {...initialState(), gold: 4242}}));
+
+        const loaded = loadState();
+        expect(loaded.gold).toBe(4242);
+
+        saveState(loaded);
+        expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+        expect(loadState().gold).toBe(4242);
+    });
+});
+
+describe('clearSave', () => {
     it('removes the save so the next load is a new game', () => {
         saveState({...initialState(), gold: 9999});
-        clearLocalStorage();
+        clearSave();
+        expect(loadState()).toEqual(initialState());
+    });
+
+    it('also removes a legacy localStorage save', () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({version: 3, state: {...initialState(), gold: 9999}}));
+        clearSave();
         expect(loadState()).toEqual(initialState());
     });
 });
 
 describe('saveState', () => {
-    it('does not throw when storage rejects the write', () => {
+    it('does not throw when the browser rejects the write', () => {
         vi.spyOn(console, 'error').mockImplementation(() => {});
-        vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-            throw new Error('QuotaExceededError');
+        vi.spyOn(Document.prototype, 'cookie', 'set').mockImplementation(() => {
+            throw new Error('SecurityError');
         });
         expect(() => saveState(initialState())).not.toThrow();
     });

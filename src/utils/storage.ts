@@ -6,13 +6,14 @@ import {speciesKey} from "./shikigami.ts";
 
 const STORAGE_KEY = "clickhero-japan";
 
+/** A year, refreshed on every save, so an active player never sees the save expire. */
+const COOKIE_MAX_AGE_S = 60 * 60 * 24 * 365;
+
+/** Browsers silently drop a cookie over 4096 bytes, name and attributes included. */
+const COOKIE_MAX_BYTES = 4000;
+
 /** Bumped whenever the saved shape changes in a way older saves cannot satisfy. */
 const SCHEMA_VERSION = 4;
-
-interface SavedGame {
-    version: number;
-    state: PersistentState;
-}
 
 export function initialState(): PersistentState {
     return {
@@ -141,7 +142,8 @@ export function loadState(): PersistentState {
     const fresh = initialState();
 
     try {
-        const rawData = localStorage.getItem(STORAGE_KEY);
+        // Saves lived in localStorage before the cookie; read one once so it is not lost.
+        const rawData = readCookie() ?? localStorage.getItem(STORAGE_KEY);
         if (!rawData) return fresh;
 
         const parsedData: unknown = JSON.parse(rawData);
@@ -178,19 +180,41 @@ export function loadState(): PersistentState {
     }
 }
 
+function readCookie(): string | null {
+    const prefix = `${STORAGE_KEY}=`;
+    const entry = document.cookie.split('; ').find(c => c.startsWith(prefix));
+    return entry ? decodeURIComponent(entry.slice(prefix.length)) : null;
+}
+
+function writeCookie(value: string, maxAgeS: number): void {
+    document.cookie = `${STORAGE_KEY}=${value}; path=/; max-age=${maxAgeS}; SameSite=Lax`;
+}
+
 export function saveState(state: PersistentState): void {
     try {
-        const payload: SavedGame = {version: SCHEMA_VERSION, state};
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        // Names and effects come back from the code on load (reconcileBonuses), so only
+        // progress is written. That is what keeps the save far under the cookie limit.
+        const bonuses = state.bonuses.map(({id, level, cost, power}) => ({id, level, cost, power}));
+        const payload = {version: SCHEMA_VERSION, state: {...state, bonuses}};
+        const value = encodeURIComponent(JSON.stringify(payload));
+
+        if (value.length > COOKIE_MAX_BYTES) {
+            console.error(`Save is ${value.length} bytes, too large for a cookie; not saved`);
+            return;
+        }
+
+        writeCookie(value, COOKIE_MAX_AGE_S);
+        localStorage.removeItem(STORAGE_KEY);
     } catch (error) {
         console.error('Failed to save game data:', error);
     }
 }
 
-export function clearLocalStorage(): void {
+export function clearSave(): void {
     try {
+        writeCookie('', 0);
         localStorage.removeItem(STORAGE_KEY);
     } catch (error) {
-        console.error('Failed to clear storage:', error);
+        console.error('Failed to clear save:', error);
     }
 }

@@ -4,7 +4,7 @@ import {useEffect} from 'react';
 import App from '../App.tsx';
 import {GameContextProvider} from '../contexts/GameContextProvider.tsx';
 import {useCombat} from '../hooks/useCombat.ts';
-import {initialState, loadState, saveState} from '../utils/storage.ts';
+import {clearSave, initialState, loadState, saveState} from '../utils/storage.ts';
 import type {PersistentState} from '../types/game.ts';
 import {HANDCRAFTED_DEPTH, monsterAt} from '../utils/bestiary.ts';
 import {collectionWithDps} from '../test/collection.ts';
@@ -26,6 +26,7 @@ const attackButton = () => screen.getByRole('button', {name: /攻撃/});
 
 beforeEach(() => {
     localStorage.clear();
+    clearSave();
     vi.useFakeTimers();
 });
 
@@ -128,13 +129,19 @@ describe('persistence', () => {
     });
 });
 
-describe('clear progress', () => {
+describe('reset from the menu', () => {
+    const openReset = () => {
+        fireEvent.click(screen.getByRole('button', {name: 'Open menu'}));
+        fireEvent.click(screen.getByRole('button', {name: /reset game/i}));
+    };
+
     it('resets to a real new game once confirmed', () => {
         vi.spyOn(window, 'confirm').mockReturnValue(true);
         seed({power: 500, shikigami: collectionWithDps(300), gold: 9_999});
         renderGame();
 
-        fireEvent.click(screen.getByRole('button', {name: /clear progress/i}));
+        openReset();
+        fireEvent.click(screen.getByRole('button', {name: 'Yes, reset'}));
         act(() => void vi.advanceTimersByTime(1_000));
 
         const fresh = initialState();
@@ -142,12 +149,12 @@ describe('clear progress', () => {
         expect(loadState()).toEqual(fresh);
     });
 
-    it('keeps the save when the confirmation is declined', () => {
-        vi.spyOn(window, 'confirm').mockReturnValue(false);
+    it('keeps the save when the confirmation is cancelled', () => {
         seed({power: 500, gold: 9_999});
         renderGame();
 
-        fireEvent.click(screen.getByRole('button', {name: /clear progress/i}));
+        openReset();
+        fireEvent.click(screen.getByRole('button', {name: 'Cancel'}));
         act(() => void vi.advanceTimersByTime(1_000));
 
         expect(loadState().gold).toBe(9_999);

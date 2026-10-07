@@ -3,6 +3,7 @@ import {usePlayer} from "../hooks/usePlayer.ts";
 import {useCapture} from "../hooks/useCapture.ts";
 import {SoundToggle} from "./SoundToggle.tsx";
 import {TekagenToggle} from "./TekagenToggle.tsx";
+import {GameMenu} from "./GameMenu.tsx";
 
 /** Large numbers stay readable once the gold multiplier starts compounding. */
 const formatNumber = (value: number): string => value.toLocaleString('en-US');
@@ -47,13 +48,7 @@ export function Header() {
                     <TekagenToggle/>
                     <div className="flex items-center space-x-2">
                         <SoundToggle/>
-                        <button
-                            onClick={onClearProgress}
-                            className="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-                        >
-                            <BrushCleaning className="w-5 h-5" />
-                            <span>Clear progress</span>
-                        </button>
+                        <GameMenu/>
                     </div>
                 </div>
             </div>
