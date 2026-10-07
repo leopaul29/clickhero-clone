@@ -128,13 +128,18 @@ describe('persistence', () => {
     });
 });
 
-describe('clear progress', () => {
+describe('reset from the menu', () => {
+    const openReset = () => {
+        fireEvent.click(screen.getByRole('button', {name: 'Open menu'}));
+        fireEvent.click(screen.getByRole('button', {name: /reset game/i}));
+    };
+
     it('resets to a real new game once confirmed', () => {
-        vi.spyOn(window, 'confirm').mockReturnValue(true);
         seed({power: 500, dps: 300, gold: 9_999});
         renderGame();
 
-        fireEvent.click(screen.getByRole('button', {name: /clear progress/i}));
+        openReset();
+        fireEvent.click(screen.getByRole('button', {name: 'Yes, reset'}));
         act(() => void vi.advanceTimersByTime(1_000));
 
         const fresh = initialState();
@@ -142,12 +147,12 @@ describe('clear progress', () => {
         expect(loadState()).toEqual(fresh);
     });
 
-    it('keeps the save when the confirmation is declined', () => {
-        vi.spyOn(window, 'confirm').mockReturnValue(false);
+    it('keeps the save when the confirmation is cancelled', () => {
         seed({power: 500, gold: 9_999});
         renderGame();
 
-        fireEvent.click(screen.getByRole('button', {name: /clear progress/i}));
+        openReset();
+        fireEvent.click(screen.getByRole('button', {name: 'Cancel'}));
         act(() => void vi.advanceTimersByTime(1_000));
 
         expect(loadState().gold).toBe(9_999);

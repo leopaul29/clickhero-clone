@@ -1,6 +1,7 @@
-import {BrushCleaning, Coins, Sword, Zap} from "lucide-react";
+import {Coins, Sword, Zap} from "lucide-react";
 import {usePlayer} from "../hooks/usePlayer.ts";
 import {SoundToggle} from "./SoundToggle.tsx";
+import {GameMenu} from "./GameMenu.tsx";
 
 /** Large numbers stay readable once the gold multiplier starts compounding. */
 const formatNumber = (value: number): string => value.toLocaleString('en-US');
@@ -10,13 +11,7 @@ const formatNumber = (value: number): string => value.toLocaleString('en-US');
  * @constructor
  */
 export function Header() {
-    const {gold, power, dps, clearProgress} = usePlayer();
-
-    const onClearProgress = () => {
-        if (window.confirm('Reset all progress? This cannot be undone.')) {
-            clearProgress();
-        }
-    };
+    const {gold, power, dps} = usePlayer();
 
     return <div className="bg-gradient-to-r from-red-900 to-red-800 text-white p-4 shadow-lg">
             <div className="container mx-auto flex justify-center items-center">
@@ -38,13 +33,7 @@ export function Header() {
                     </div>
                     <div className="flex items-center space-x-2">
                         <SoundToggle/>
-                        <button
-                            onClick={onClearProgress}
-                            className="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-                        >
-                            <BrushCleaning className="w-5 h-5" />
-                            <span>Clear progress</span>
-                        </button>
+                        <GameMenu/>
                     </div>
                 </div>
             </div>
