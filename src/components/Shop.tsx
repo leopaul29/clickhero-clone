@@ -1,5 +1,4 @@
 import type {Bonus} from "../types/game.ts";
-import {usePlayer} from "../hooks/usePlayer.ts";
 import {useShop} from "../hooks/useShop.ts";
 
 /**
@@ -8,17 +7,16 @@ import {useShop} from "../hooks/useShop.ts";
  * @constructor
  */
 export function Shop() {
-    const {gold, bonuses} = usePlayer();
-    const {buyBonus} = useShop();
+    const {gold, bonuses, buyBonus} = useShop();
 
-    return <div className="bg-white rounded-lg shadow-xl p-6 japanese-paper min-w-[500px]">
+    return <div className="bg-white rounded-lg shadow-xl p-4 sm:p-6 japanese-paper w-full lg:w-auto lg:min-w-[500px]">
         <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
             🏪 道具屋 (Shop)
         </h2>
 
         <div className="space-y-4">
             {bonuses.map((bonus:Bonus) => (
-                <div key={bonus.name} className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 border border-yellow-200">
+                <div key={bonus.id} className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 border border-yellow-200">
                     <div className="flex items-center justify-between gap-5">
                         <div className="flex items-center space-x-3">
                             <span className="text-2xl">{bonus.icon}</span>
