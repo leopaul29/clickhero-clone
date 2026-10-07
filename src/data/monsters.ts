@@ -10,9 +10,15 @@ export const MONSTERS: HandcraftedMonster[] = [
 ];
 // create one monster who is a chest with a lot of life and a lot of gold that randomly appears every 1% of time
 
+/**
+ * Ids are save keys, so they are never reused or renumbered.
+ *
+ * Id 2 was Chi Energy, a flat "+3 automatic damage". It is gone: automatic damage is
+ * the shikigami collection now, and a bought number sitting beside a shelf of bound
+ * spirits that each deal damage would be two answers to the same question.
+ */
 export const BONUSES: Bonus[] = [
     { id: 1, name: "Katana Power", nameJp: "刀の力", description: "Increases attack power by ", effect: "power", power: 5, level: 0, cost: 15, icon: "⚔️" },
-    { id: 2, name: "Chi Energy", nameJp: "気のエネルギー", description: "Increases automatic damage per second by ", effect: "dps", power: 3, level: 0, cost: 40, icon: "🌊" },
     { id: 3, name: "Lucky Charm", nameJp: "幸運のお守り", description: "Increases rewards by ", effect: "goldMultiplier", power: 2, level: 0, cost: 100, icon: "🎋" },
 ];
 // create a bonus that clicks 5 times per second automaticaly during 30 sec

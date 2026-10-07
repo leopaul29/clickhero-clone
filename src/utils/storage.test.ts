@@ -2,6 +2,8 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {clearLocalStorage, initialState, loadState, saveState} from './storage.ts';
 import {BONUSES} from '../data/monsters.ts';
 import {monsterAt} from './bestiary.ts';
+import {STARTING_OFUDA} from './capture.ts';
+import {collectionWithDps} from '../test/collection.ts';
 
 const STORAGE_KEY = 'clickhero-japan';
 
@@ -12,8 +14,16 @@ describe('loadState', () => {
         expect(loadState()).toEqual(initialState());
     });
 
-    it('round-trips a saved game', () => {
-        const saved = {...initialState(), gold: 512, power: 40, dps: 17, monsterLife: 9};
+    it('round-trips a saved game, collection and stance included', () => {
+        const saved = {
+            ...initialState(),
+            gold: 512,
+            power: 40,
+            monsterLife: 9,
+            ofuda: 11,
+            tekagen: true,
+            shikigami: collectionWithDps(4),
+        };
         saveState(saved);
         expect(loadState()).toEqual(saved);
     });
@@ -61,7 +71,25 @@ describe('schema migration', () => {
         expect(loaded.depth).toBe(4);
         expect(loaded.gold).toBe(640);
         expect(loaded.power).toBe(33);
-        expect(loaded.dps).toBe(12);
+    });
+
+    // v4 made the shikigami collection the only source of automatic damage. A v3 save
+    // carries a `dps` number with nowhere to live, so it is dropped rather than
+    // trusted — and the player is handed a starting hand of 御札 to earn it back.
+    it('drops the stored dps from a v3 save and hands back a starting hand', () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            version: 3,
+            state: {gold: 640, power: 33, dps: 12, bonuses: [], depth: 4, monsterLife: 50},
+        }));
+
+        const loaded = loadState();
+
+        expect(loaded).not.toHaveProperty('dps');
+        expect(loaded.depth).toBe(4);
+        expect(loaded.gold).toBe(640);
+        expect(loaded.shikigami).toEqual({});
+        expect(loaded.ofuda).toBe(STARTING_OFUDA);
+        expect(loaded.tekagen).toBe(false);
     });
 
     it('starts a new game for a version it does not know', () => {
@@ -122,5 +150,82 @@ describe('saveState', () => {
             throw new Error('QuotaExceededError');
         });
         expect(() => saveState(initialState())).not.toThrow();
+    });
+});
+
+describe('shikigami reconciliation', () => {
+    // The collection is the player's entire automatic damage, so a hand-edited or
+    // half-written save must not be able to put a NaN or a level 0 into the engine.
+    const save = (shikigami: unknown) =>
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            version: 4,
+            state: {...initialState(), shikigami},
+        }));
+
+    it('keeps a well-formed entry', () => {
+        save({kappa: {key: 'kappa', name: 'Kappa', nameJp: '河童', emoji: '🐸', depth: 3, level: 4, copies: 2}});
+
+        expect(loadState().shikigami.kappa).toEqual({
+            key: 'kappa', name: 'Kappa', nameJp: '河童', emoji: '🐸', depth: 3, level: 4, copies: 2,
+        });
+    });
+
+    it.each([
+        ['a missing name', {depth: 2, level: 1}],
+        ['a blank name', {name: '   ', depth: 2, level: 1}],
+        ['no depth', {name: 'Kappa', level: 1}],
+        ['a depth that is not a number', {name: 'Kappa', depth: 'deep', level: 1}],
+        ['not an object at all', 'kappa'],
+    ])('drops an entry with %s', (_label, entry) => {
+        save({kappa: entry});
+        expect(loadState().shikigami).toEqual({});
+    });
+
+    it('re-derives the key from the name, so the two cannot disagree', () => {
+        save({'wrong-key': {key: 'wrong-key', name: 'Nue', nameJp: '鵺', emoji: '🌑', depth: 9, level: 1, copies: 0}});
+
+        const loaded = loadState().shikigami;
+
+        expect(Object.keys(loaded)).toEqual(['nue']);
+        expect(loaded.nue.key).toBe('nue');
+    });
+
+    it('floors a level at one, so an entry always deals damage', () => {
+        save({kappa: {name: 'Kappa', depth: 1, level: 0, copies: -5}});
+
+        const entry = loadState().shikigami.kappa;
+
+        expect(entry.level).toBe(1);
+        expect(entry.copies).toBe(0);
+    });
+
+    it('is empty when the saved collection is not an object', () => {
+        save(['kappa']);
+        expect(loadState().shikigami).toEqual({});
+    });
+});
+
+describe('ofuda and stance', () => {
+    it('hands a fresh game a starting hand so the first catch is reachable', () => {
+        expect(initialState().ofuda).toBe(STARTING_OFUDA);
+        expect(initialState().tekagen).toBe(false);
+    });
+
+    it('refuses a negative or non-numeric ofuda count', () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            version: 4,
+            state: {...initialState(), ofuda: -3},
+        }));
+
+        expect(loadState().ofuda).toBe(STARTING_OFUDA);
+    });
+
+    it('treats anything but true as restraint off', () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            version: 4,
+            state: {...initialState(), tekagen: 'yes'},
+        }));
+
+        expect(loadState().tekagen).toBe(false);
     });
 });

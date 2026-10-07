@@ -9,6 +9,7 @@ export const useCombat = () => {
         isAttacking: context.combatData.isAttacking,
         combatLog: context.combatData.combatLog,
         lastHit: context.combatData.lastHit,
+        lastSeal: context.combatData.lastSeal,
         attackMonster: context.actions.attackMonster,
         applyDps: context.actions.applyDps
     }), [context.combatData, context.actions.attackMonster, context.actions.applyDps]);

@@ -1,11 +1,13 @@
-import type {Bonus, PersistentState} from "../types/game.ts";
+import type {Bonus, PersistentState, Shikigami, ShikigamiCollection} from "../types/game.ts";
 import {BONUSES} from "../data/monsters.ts";
 import {clampDepth, monsterAt} from "./bestiary.ts";
+import {STARTING_OFUDA} from "./capture.ts";
+import {speciesKey} from "./shikigami.ts";
 
 const STORAGE_KEY = "clickhero-japan";
 
 /** Bumped whenever the saved shape changes in a way older saves cannot satisfy. */
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 interface SavedGame {
     version: number;
@@ -16,15 +18,20 @@ export function initialState(): PersistentState {
     return {
         gold: 20,
         power: 1,
-        dps: 0,
         bonuses: BONUSES.map(b => ({...b})),
         depth: 1,
         monsterLife: monsterAt(1).life,
+        ofuda: STARTING_OFUDA,
+        tekagen: false,
+        shikigami: {},
     };
 }
 
 const isFiniteNumber = (value: unknown): value is number =>
     typeof value === 'number' && Number.isFinite(value);
+
+const asCount = (value: unknown, fallback: number): number =>
+    isFiniteNumber(value) && value >= 0 ? Math.floor(value) : fallback;
 
 /**
  * Rebuild the bonus list from the code, carrying over only the player's progress.
@@ -52,20 +59,64 @@ function reconcileBonuses(saved: unknown): Bonus[] {
 }
 
 /**
+ * Keep the collection entries that still describe a creature, drop the rest.
+ *
+ * The collection is the player's whole DPS, so a hand-edited or half-written save must
+ * not be able to put a NaN in it — the key is re-derived from the name rather than
+ * trusted, so two entries can never disagree about which species they are.
+ */
+function reconcileShikigami(saved: unknown): ShikigamiCollection {
+    if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return {};
+
+    const entries: ShikigamiCollection = {};
+
+    for (const value of Object.values(saved as Record<string, unknown>)) {
+        if (!value || typeof value !== 'object') continue;
+
+        const raw = value as Partial<Shikigami>;
+
+        if (typeof raw.name !== 'string' || !raw.name.trim()) continue;
+        if (!isFiniteNumber(raw.depth) || raw.depth < 1) continue;
+
+        const key = speciesKey(raw.name);
+
+        entries[key] = {
+            key,
+            name: raw.name,
+            nameJp: typeof raw.nameJp === 'string' && raw.nameJp ? raw.nameJp : raw.name,
+            emoji: typeof raw.emoji === 'string' && raw.emoji ? raw.emoji : '🎴',
+            depth: clampDepth(raw.depth),
+            level: Math.max(1, asCount(raw.level, 1)),
+            copies: asCount(raw.copies, 0),
+        };
+    }
+
+    return entries;
+}
+
+/**
  * v2 identified the current enemy by `currentMonsterId` into a fixed list of five.
  * v3 replaced that with an endless `depth`. The ids were 1..5 in order, so they map
  * straight across and a save from before the endless bestiary keeps its progress.
+ *
+ * v4 made the shikigami collection the only source of automatic damage, so a stored
+ * `dps` is dropped rather than carried: there is nowhere for it to live that would not
+ * immediately disagree with the collection. A v3 player who had bought Chi Energy loses
+ * that purchase and is handed a starting hand of 御札 to earn it back by catching.
  */
 function migrate(raw: Record<string, unknown>): Record<string, unknown> | null {
-    if (raw.version === SCHEMA_VERSION) {
-        return raw.state && typeof raw.state === 'object'
-            ? raw.state as Record<string, unknown>
-            : null;
-    }
+    const version = raw.version;
 
-    if (raw.version === 2 && raw.state && typeof raw.state === 'object') {
-        const old = raw.state as Record<string, unknown>;
-        const {currentMonsterId, ...rest} = old;
+    if (!raw.state || typeof raw.state !== 'object') return null;
+
+    const state = raw.state as Record<string, unknown>;
+
+    if (version === SCHEMA_VERSION) return state;
+
+    if (version === 3) return state;
+
+    if (version === 2) {
+        const {currentMonsterId, ...rest} = state;
         return {...rest, depth: isFiniteNumber(currentMonsterId) ? currentMonsterId : 1};
     }
 
@@ -76,7 +127,6 @@ function isPersistentState(state: Record<string, unknown>): boolean {
     return (
         isFiniteNumber(state.gold) &&
         isFiniteNumber(state.power) &&
-        isFiniteNumber(state.dps) &&
         isFiniteNumber(state.depth) &&
         isFiniteNumber(state.monsterLife) &&
         Array.isArray(state.bonuses)
@@ -115,10 +165,12 @@ export function loadState(): PersistentState {
         return {
             gold: saved.gold,
             power: saved.power,
-            dps: saved.dps,
             bonuses: reconcileBonuses(saved.bonuses),
             depth,
             monsterLife: Math.min(Math.max(saved.monsterLife, 1), monster.maxLife),
+            ofuda: asCount(saved.ofuda, STARTING_OFUDA),
+            tekagen: saved.tekagen === true,
+            shikigami: reconcileShikigami(saved.shikigami),
         };
     } catch (error) {
         console.error('Failed to load game data:', error);

@@ -46,7 +46,11 @@ describe('updateBonusesStats', () => {
 
 describe('findBonusByEffect', () => {
     it('returns the matching bonus', () => {
-        expect(findBonusByEffect(BONUSES, 'dps')?.name).toBe('Chi Energy');
+        expect(findBonusByEffect(BONUSES, 'goldMultiplier')?.name).toBe('Lucky Charm');
+    });
+
+    it('returns nothing when no bonus has that effect', () => {
+        expect(findBonusByEffect([], 'power')).toBeUndefined();
     });
 });
 

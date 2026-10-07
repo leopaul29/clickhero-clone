@@ -1,9 +1,11 @@
 import {type ReactNode, useCallback, useEffect, useMemo, useReducer, useRef, useState} from "react";
 import type {Bonus, Monster, MonsterFlavor, PersistentState} from "../types/game.ts";
 import {monsterAt} from "../utils/bestiary.ts";
+import {isSealable, ofudaCost, sealThresholdFor} from "../utils/capture.ts";
+import {totalDps} from "../utils/shikigami.ts";
 import {generateAhead, getCachedFlavor, subscribeBestiary} from "../services/bestiaryStore.ts";
 import {clearLocalStorage, loadState, saveState} from "../utils/storage.ts";
-import {playCrit, playHit, playKill, playPurchase} from "../utils/audio.ts";
+import {playCrit, playFirstSeal, playHit, playKill, playPurchase, playSeal} from "../utils/audio.ts";
 import {createInitialGameState, gameReducer} from "../state/gameReducer.ts";
 import {GameContext} from "./gameContext.ts";
 
@@ -51,6 +53,13 @@ export const GameContextProvider = ({children}: GameContextProviderProps) => {
         playPurchase();
     }, []);
 
+    const buyOfuda = useCallback(() => {
+        dispatch({type: 'BUY_OFUDA'});
+        playPurchase();
+    }, []);
+
+    const toggleTekagen = useCallback(() => dispatch({type: 'TOGGLE_TEKAGEN'}), []);
+
     const clearProgress = useCallback(() => {
         clearLocalStorage();
         dispatch({type: 'RESET'});
@@ -72,6 +81,17 @@ export const GameContextProvider = ({children}: GameContextProviderProps) => {
         const flavor = arrived?.depth === state.depth ? arrived.flavor : getCachedFlavor(state.depth);
         return monsterAt(state.depth, flavor);
     }, [state.depth, arrived]);
+
+    // What the player is actually looking at, so the collection records the creature
+    // they saw rather than the procedural stand-in for its depth. A ref, for the same
+    // reason `depth` is one: sealing must not be the action that breaks the DPS timer.
+    const currentFlavorRef = useRef<MonsterFlavor>(currentMonster);
+    currentFlavorRef.current = currentMonster;
+
+    const sealMonster = useCallback(
+        () => dispatch({type: 'SEAL', flavor: currentFlavorRef.current, nextFlavor: nextFlavor()}),
+        [nextFlavor],
+    );
 
     // Keep the bestiary stocked a few depths ahead of the player. Failure is silent
     // and harmless: the procedural bestiary already covers every depth.
@@ -96,6 +116,14 @@ export const GameContextProvider = ({children}: GameContextProviderProps) => {
         else if (lastHit.source === 'click') (lastHit.isCrit ? playCrit : playHit)();
     }, [lastHit]);
 
+    // Seals carry their own fresh id for exactly the same reason hits do.
+    const lastSeal = state.lastSeal;
+    useEffect(() => {
+        if (!lastSeal) return;
+
+        (lastSeal.isFirst ? playFirstSeal : playSeal)();
+    }, [lastSeal]);
+
     // Re-read whenever anything lands in the cache, whichever depth asked for it.
     useEffect(() => subscribeBestiary(() => {
         const depth = depthRef.current;
@@ -107,11 +135,16 @@ export const GameContextProvider = ({children}: GameContextProviderProps) => {
     const persistentData: PersistentState = useMemo(() => ({
         gold: state.gold,
         power: state.power,
-        dps: state.dps,
         bonuses: state.bonuses,
         depth: state.depth,
         monsterLife: state.monsterLife,
-    }), [state.gold, state.power, state.dps, state.bonuses, state.depth, state.monsterLife]);
+        ofuda: state.ofuda,
+        tekagen: state.tekagen,
+        shikigami: state.shikigami,
+    }), [
+        state.gold, state.power, state.bonuses, state.depth, state.monsterLife,
+        state.ofuda, state.tekagen, state.shikigami,
+    ]);
 
     useEffect(() => {
         const timeoutId = window.setTimeout(() => saveState(persistentData), SAVE_DEBOUNCE_MS);
@@ -125,17 +158,30 @@ export const GameContextProvider = ({children}: GameContextProviderProps) => {
         return () => window.removeEventListener('pagehide', flush);
     }, [persistentData]);
 
+    // Automatic damage is read from the collection every render rather than stored,
+    // so there is no second copy of it that a save or a migration could contradict.
+    const captureData = useMemo(() => ({
+        dps: totalDps(state.shikigami),
+        sealThreshold: sealThresholdFor(currentMonster.maxLife),
+        canSeal: state.ofuda > 0 && isSealable(state.monsterLife, currentMonster.maxLife),
+        ofudaCost: ofudaCost(state.depth),
+    }), [state.shikigami, state.monsterLife, state.ofuda, state.depth, currentMonster.maxLife]);
+
     const actions = useMemo(
-        () => ({attackMonster, applyDps, buyBonus, clearProgress}),
-        [attackMonster, applyDps, buyBonus, clearProgress]
+        () => ({attackMonster, applyDps, buyBonus, buyOfuda, sealMonster, toggleTekagen, clearProgress}),
+        [attackMonster, applyDps, buyBonus, buyOfuda, sealMonster, toggleTekagen, clearProgress]
     );
 
     const contextValue = useMemo(() => ({
         persistentData,
         monsterData: {currentMonster, monsterLife: state.monsterLife, depth: state.depth},
-        combatData: {isAttacking: state.isAttacking, combatLog: state.combatLog, lastHit},
+        combatData: {isAttacking: state.isAttacking, combatLog: state.combatLog, lastHit, lastSeal},
+        captureData,
         actions,
-    }), [persistentData, currentMonster, state.depth, state.monsterLife, state.isAttacking, state.combatLog, lastHit, actions]);
+    }), [
+        persistentData, currentMonster, state.depth, state.monsterLife, state.isAttacking,
+        state.combatLog, lastHit, lastSeal, captureData, actions,
+    ]);
 
     return (
         <GameContext.Provider value={contextValue}>
