@@ -8,6 +8,7 @@ export const useCombat = () => {
     return useMemo(() => ({
         isAttacking: context.combatData.isAttacking,
         combatLog: context.combatData.combatLog,
+        lastHit: context.combatData.lastHit,
         attackMonster: context.actions.attackMonster,
         applyDps: context.actions.applyDps
     }), [context.combatData, context.actions.attackMonster, context.actions.applyDps]);

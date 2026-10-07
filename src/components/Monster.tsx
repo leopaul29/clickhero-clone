@@ -1,12 +1,22 @@
 import {useMonster} from "../hooks/useMonster.ts";
+import {useCombat} from "../hooks/useCombat.ts";
+import {useReplayAnimation} from "../hooks/useReplayAnimation.ts";
+import {FloatingDamage} from "./FloatingDamage.tsx";
+import {KillBurst} from "./KillBurst.tsx";
 
 /**
  * Monster display and life bar
  * @constructor
  */
 export function Monster() {
-    const {currentMonster, monsterLife, depth, isAttacking} = useMonster();
+    const {currentMonster, monsterLife, depth} = useMonster();
+    const {lastHit} = useCombat();
+
     const lifePercentage = (monsterLife / currentMonster.maxLife) * 100;
+    const emojiRef = useReplayAnimation<HTMLDivElement>(
+        lastHit?.id,
+        lastHit?.isCrit ? 'recoil-crit' : 'recoil',
+    );
 
     return <div>
         <div className="space-y-2">
@@ -23,8 +33,14 @@ export function Monster() {
             <p className="text-gray-500">{currentMonster.description}</p>
         </div>
 
-        <div className={`text-8xl ${isAttacking ? 'attack-animation' : ''}`}>
-            {currentMonster.emoji}
+        {/* Anchor for the damage number and the kill burst, which are positioned
+            against the creature rather than the card. */}
+        <div className="relative">
+            <div ref={emojiRef} className="text-8xl">
+                {currentMonster.emoji}
+            </div>
+            <FloatingDamage hit={lastHit}/>
+            <KillBurst hit={lastHit}/>
         </div>
 
         {/* Life bar */}

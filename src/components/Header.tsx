@@ -1,5 +1,6 @@
 import {BrushCleaning, Coins, Sword, Zap} from "lucide-react";
 import {usePlayer} from "../hooks/usePlayer.ts";
+import {SoundToggle} from "./SoundToggle.tsx";
 
 /** Large numbers stay readable once the gold multiplier starts compounding. */
 const formatNumber = (value: number): string => value.toLocaleString('en-US');
@@ -36,6 +37,7 @@ export function Header() {
                         <span className="text-sm">DPS</span>
                     </div>
                     <div className="flex items-center space-x-2">
+                        <SoundToggle/>
                         <button
                             onClick={onClearProgress}
                             className="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"

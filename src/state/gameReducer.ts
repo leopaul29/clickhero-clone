@@ -1,4 +1,4 @@
-import type {Bonus, GameState, MonsterFlavor} from "../types/game.ts";
+import type {Bonus, GameState, Hit, MonsterFlavor} from "../types/game.ts";
 import {calculateReward, updateBonusesStats} from "../utils/gameLogic.ts";
 import {monsterAt} from "../utils/bestiary.ts";
 import {initialState} from "../utils/storage.ts";
@@ -6,16 +6,41 @@ import {initialState} from "../utils/storage.ts";
 /** How many combat log lines stay on screen. */
 export const MAX_LOG_ENTRIES = 5;
 
+/** Chance a click lands a critical hit, and what it multiplies damage by. */
+export const CRIT_CHANCE = 0.05;
+export const CRIT_MULTIPLIER = 10;
+
+/**
+ * Randomness lives outside the reducer: the caller rolls and hands the result in,
+ * exactly as it does for generated flavour. An absent roll never crits, which keeps
+ * every test deterministic without stubbing a global.
+ */
+export const isCritRoll = (roll?: number): boolean =>
+    typeof roll === 'number' && roll < CRIT_CHANCE;
+
 export type GameAction =
-    | { type: 'ATTACK'; nextFlavor?: MonsterFlavor | null }
+    | { type: 'ATTACK'; nextFlavor?: MonsterFlavor | null; roll?: number }
     | { type: 'ATTACK_END' }
     | { type: 'TICK_DPS'; nextFlavor?: MonsterFlavor | null }
     | { type: 'BUY_BONUS'; bonus: Bonus }
     | { type: 'RESET' };
 
 export function createInitialGameState(persisted = initialState()): GameState {
-    return {...persisted, isAttacking: false, combatLog: []};
+    return {...persisted, isAttacking: false, combatLog: [], lastHit: null};
 }
+
+const nextHit = (
+    state: GameState,
+    amount: number,
+    killed: boolean,
+    {isCrit, source}: Pick<Hit, 'isCrit' | 'source'>,
+): Hit => ({
+    id: (state.lastHit?.id ?? 0) + 1,
+    amount,
+    isCrit,
+    killed,
+    source,
+});
 
 const appendLog = (log: string[], entry: string): string[] =>
     [...log, entry].slice(-MAX_LOG_ENTRIES);
@@ -25,11 +50,17 @@ const appendLog = (log: string[], entry: string): string[] =>
  * Pure and atomic: the life, the gold and the monster always change together, so no
  * two damage sources in the same tick can read a stale life and kill twice.
  */
+interface DamageOptions {
+    isCrit?: boolean;
+    by?: Hit['source'];
+    nextFlavor?: MonsterFlavor | null;
+}
+
 function damage(
     state: GameState,
     amount: number,
     source: string,
-    nextFlavor?: MonsterFlavor | null,
+    {isCrit = false, by = 'click', nextFlavor}: DamageOptions = {},
 ): GameState {
     if (amount <= 0) return state;
 
@@ -40,6 +71,7 @@ function damage(
         return {
             ...state,
             monsterLife: newLife,
+            lastHit: nextHit(state, amount, false, {isCrit, source: by}),
             combatLog: appendLog(state.combatLog, `${source}: -${amount} HP`),
         };
     }
@@ -54,6 +86,7 @@ function damage(
         gold: state.gold + reward,
         depth: next.depth,
         monsterLife: next.life,
+        lastHit: nextHit(state, amount, true, {isCrit, source: by}),
         combatLog: appendLog(state.combatLog, `${monster.nameJp} defeated ! +${reward} 金`),
     };
 }
@@ -80,15 +113,25 @@ function buyBonus(state: GameState, bonus: Bonus): GameState {
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
     switch (action.type) {
-        case 'ATTACK':
+        case 'ATTACK': {
             if (state.isAttacking) return state;
-            return damage({...state, isAttacking: true}, state.power, "刀攻撃", action.nextFlavor);
+
+            const isCrit = isCritRoll(action.roll);
+            const power = isCrit ? state.power * CRIT_MULTIPLIER : state.power;
+
+            return damage(
+                {...state, isAttacking: true},
+                power,
+                isCrit ? "会心の一撃" : "刀攻撃",
+                {isCrit, by: 'click', nextFlavor: action.nextFlavor},
+            );
+        }
 
         case 'ATTACK_END':
             return state.isAttacking ? {...state, isAttacking: false} : state;
 
         case 'TICK_DPS':
-            return damage(state, state.dps, "Chi Energy", action.nextFlavor);
+            return damage(state, state.dps, "Chi Energy", {by: 'dps', nextFlavor: action.nextFlavor});
 
         case 'BUY_BONUS':
             return buyBonus(state, action.bonus);

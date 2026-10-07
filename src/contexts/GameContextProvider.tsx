@@ -3,6 +3,7 @@ import type {Bonus, Monster, MonsterFlavor, PersistentState} from "../types/game
 import {monsterAt} from "../utils/bestiary.ts";
 import {generateAhead, getCachedFlavor, subscribeBestiary} from "../services/bestiaryStore.ts";
 import {clearLocalStorage, loadState, saveState} from "../utils/storage.ts";
+import {playCrit, playHit, playKill, playPurchase} from "../utils/audio.ts";
 import {createInitialGameState, gameReducer} from "../state/gameReducer.ts";
 import {GameContext} from "./gameContext.ts";
 
@@ -36,7 +37,7 @@ export const GameContextProvider = ({children}: GameContextProviderProps) => {
     const attackMonster = useCallback(() => {
         if (cooldownRef.current !== null) return;
 
-        dispatch({type: 'ATTACK', nextFlavor: nextFlavor()});
+        dispatch({type: 'ATTACK', nextFlavor: nextFlavor(), roll: Math.random()});
         cooldownRef.current = window.setTimeout(() => {
             cooldownRef.current = null;
             dispatch({type: 'ATTACK_END'});
@@ -45,7 +46,10 @@ export const GameContextProvider = ({children}: GameContextProviderProps) => {
 
     const applyDps = useCallback(() => dispatch({type: 'TICK_DPS', nextFlavor: nextFlavor()}), [nextFlavor]);
 
-    const buyBonus = useCallback((bonus: Bonus) => dispatch({type: 'BUY_BONUS', bonus}), []);
+    const buyBonus = useCallback((bonus: Bonus) => {
+        dispatch({type: 'BUY_BONUS', bonus});
+        playPurchase();
+    }, []);
 
     const clearProgress = useCallback(() => {
         clearLocalStorage();
@@ -78,6 +82,19 @@ export const GameContextProvider = ({children}: GameContextProviderProps) => {
 
         return () => controller.abort();
     }, [state.depth]);
+
+    // Sound follows the hit rather than the click, because whether it was a
+    // critical or a kill is only known once the reducer has run. A per-second DPS
+    // tick stays silent — it would be a metronome.
+    // The reducer mints a fresh Hit for every blow, so depending on the object
+    // itself fires exactly once per hit and needs no dependency suppression.
+    const lastHit = state.lastHit;
+    useEffect(() => {
+        if (!lastHit) return;
+
+        if (lastHit.killed) playKill();
+        else if (lastHit.source === 'click') (lastHit.isCrit ? playCrit : playHit)();
+    }, [lastHit]);
 
     // Re-read whenever anything lands in the cache, whichever depth asked for it.
     useEffect(() => subscribeBestiary(() => {
@@ -116,9 +133,9 @@ export const GameContextProvider = ({children}: GameContextProviderProps) => {
     const contextValue = useMemo(() => ({
         persistentData,
         monsterData: {currentMonster, monsterLife: state.monsterLife, depth: state.depth},
-        combatData: {isAttacking: state.isAttacking, combatLog: state.combatLog},
+        combatData: {isAttacking: state.isAttacking, combatLog: state.combatLog, lastHit},
         actions,
-    }), [persistentData, currentMonster, state.depth, state.monsterLife, state.isAttacking, state.combatLog, actions]);
+    }), [persistentData, currentMonster, state.depth, state.monsterLife, state.isAttacking, state.combatLog, lastHit, actions]);
 
     return (
         <GameContext.Provider value={contextValue}>

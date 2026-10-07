@@ -50,10 +50,27 @@ export interface PersistentState {
     monsterLife: number;
 }
 
+/**
+ * The most recent blow, kept so the UI can animate it.
+ *
+ * `id` increments on every hit: two identical hits in a row still produce a new
+ * object, which is what lets a repeated 5-damage click replay its animation
+ * instead of the DOM deciding nothing changed.
+ */
+export interface Hit {
+    id: number,
+    amount: number,
+    isCrit: boolean,
+    killed: boolean,
+    /** Which hand dealt it — a per-second tick must not sound like a click. */
+    source: 'click' | 'dps',
+}
+
 /** Persistent state plus the session-only bits that are not worth saving. */
 export interface GameState extends PersistentState {
     isAttacking: boolean;
     combatLog: string[];
+    lastHit: Hit | null;
 }
 
 export interface GameContextType {
@@ -67,6 +84,7 @@ export interface GameContextType {
     combatData: {
         isAttacking: boolean;
         combatLog: string[];
+        lastHit: Hit | null;
     };
     actions: {
         attackMonster: () => void;
